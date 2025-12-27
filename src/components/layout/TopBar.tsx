@@ -1,4 +1,4 @@
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,8 +11,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function TopBar() {
+  const { user, signOut } = useAuth();
+
+  const getInitials = (email: string | undefined) => {
+    if (!email) return 'U';
+    const name = email.split('@')[0];
+    return name.slice(0, 2).toUpperCase();
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/80 px-6 backdrop-blur-md">
       {/* Search */}
@@ -67,12 +80,12 @@ export function TopBar() {
             <Button variant="ghost" className="flex items-center gap-3 pl-2 pr-4">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
-                  TO
+                  {getInitials(user?.email)}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden text-left md:block">
-                <p className="text-sm font-medium">Trebor Oscorima</p>
-                <p className="text-xs text-muted-foreground">Administrador</p>
+                <p className="text-sm font-medium">{user?.email?.split('@')[0] || 'Usuario'}</p>
+                <p className="text-xs text-muted-foreground">Usuario</p>
               </div>
             </Button>
           </DropdownMenuTrigger>
@@ -85,7 +98,8 @@ export function TopBar() {
             </DropdownMenuItem>
             <DropdownMenuItem>Configuración</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
               Cerrar sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
