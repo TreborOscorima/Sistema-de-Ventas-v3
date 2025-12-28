@@ -11,6 +11,7 @@ import POSPage from "./pages/POSPage";
 import ProductsPage from "./pages/ProductsPage";
 import SalesPage from "./pages/SalesPage";
 import CajaPage from "./pages/CajaPage";
+import ReservasPage from "./pages/ReservasPage";
 import AuthPage from "./pages/AuthPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
@@ -35,7 +36,7 @@ const App = () => (
                 <Route path="/clientes" element={<PlaceholderPage />} />
                 <Route path="/ventas" element={<SalesPage />} />
                 <Route path="/caja" element={<CajaPage />} />
-                <Route path="/reservas" element={<PlaceholderPage />} />
+                <Route path="/reservas" element={<ReservasPage />} />
                 <Route path="/reportes" element={<PlaceholderPage />} />
                 <Route path="/configuracion" element={<PlaceholderPage />} />
               </Route>

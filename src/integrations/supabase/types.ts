@@ -103,6 +103,39 @@ export type Database = {
         }
         Relationships: []
       }
+      courts: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          price_per_hour: number
+          sport_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price_per_hour?: number
+          sport_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_per_hour?: number
+          sport_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -129,6 +162,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      reservations: {
+        Row: {
+          court_id: string
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          end_time: string
+          id: string
+          notes: string | null
+          reservation_date: string
+          start_time: string
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          court_id: string
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          end_time: string
+          id?: string
+          notes?: string | null
+          reservation_date: string
+          start_time: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          court_id?: string
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          end_time?: string
+          id?: string
+          notes?: string | null
+          reservation_date?: string
+          start_time?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
