@@ -9,6 +9,8 @@ import {
   Smartphone,
   User,
   ShoppingBag,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,83 +25,39 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-
-const categories = [
-  { id: "all", name: "Todos" },
-  { id: "bebidas", name: "Bebidas" },
-  { id: "snacks", name: "Snacks" },
-  { id: "lacteos", name: "Lácteos" },
-  { id: "limpieza", name: "Limpieza" },
-  { id: "otros", name: "Otros" },
-];
-
-const products = [
-  { id: 1, name: "Agua San Luis 500ml", price: 1.5, stock: 48, category: "bebidas" },
-  { id: 2, name: "Coca Cola 500ml", price: 2.5, stock: 36, category: "bebidas" },
-  { id: 3, name: "Gatorade Limón 500ml", price: 3.0, stock: 24, category: "bebidas" },
-  { id: 4, name: "Inca Kola 500ml", price: 2.5, stock: 32, category: "bebidas" },
-  { id: 5, name: "Snickers Bar", price: 2.0, stock: 20, category: "snacks" },
-  { id: 6, name: "Galletas Oreo", price: 2.0, stock: 30, category: "snacks" },
-  { id: 7, name: "Papitas Lays", price: 2.5, stock: 25, category: "snacks" },
-  { id: 8, name: "Chocolate Sublime", price: 1.5, stock: 40, category: "snacks" },
-  { id: 9, name: "Leche Gloria 1L", price: 4.5, stock: 18, category: "lacteos" },
-  { id: 10, name: "Yogurt Laive", price: 3.0, stock: 15, category: "lacteos" },
-  { id: 11, name: "Detergente Ace 500g", price: 8.0, stock: 12, category: "limpieza" },
-  { id: 12, name: "Jabón Bolívar", price: 2.5, stock: 20, category: "limpieza" },
-];
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-}
+import { usePOS } from "@/hooks/use-pos";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Link } from "react-router-dom";
 
 export default function POSPage() {
+  const {
+    categories,
+    products,
+    cart,
+    selectedPayment,
+    loading,
+    processing,
+    activeSession,
+    subtotal,
+    tax,
+    total,
+    setSelectedPayment,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    processSale,
+  } = usePOS();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState("");
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === "all" || 
+      (product.category && product.category.slug === selectedCategory);
     return matchesSearch && matchesCategory;
   });
-
-  const addToCart = (product: typeof products[0]) => {
-    setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, { id: product.id, name: product.name, price: product.price, quantity: 1 }];
-    });
-  };
-
-  const updateQuantity = (id: number, delta: number) => {
-    setCart((prev) =>
-      prev
-        .map((item) =>
-          item.id === id
-            ? { ...item, quantity: Math.max(0, item.quantity + delta) }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
-  };
-
-  const removeFromCart = (id: number) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const igv = subtotal * 0.18;
-  const total = subtotal + igv;
 
   const paymentMethods = [
     { id: "cash", name: "Efectivo", icon: Banknote },
@@ -108,10 +66,37 @@ export default function POSPage() {
     { id: "plin", name: "Plin", icon: Smartphone },
   ];
 
+  const handleProcessSale = async () => {
+    await processSale(customerName || undefined);
+    setCustomerName("");
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-[calc(100vh-8rem)] gap-6">
       {/* Products Section */}
       <div className="flex flex-1 flex-col rounded-xl border border-border bg-card shadow-sm">
+        {/* Cashbox Alert */}
+        {!activeSession && (
+          <Alert variant="destructive" className="m-4 mb-0">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Caja cerrada</AlertTitle>
+            <AlertDescription>
+              Debes abrir la caja antes de procesar ventas.{" "}
+              <Link to="/caja" className="underline font-medium">
+                Ir a Caja
+              </Link>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Search & Categories */}
         <div className="border-b border-border p-4">
           <div className="relative mb-4">
@@ -125,15 +110,26 @@ export default function POSPage() {
             />
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button
+              variant={selectedCategory === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory("all")}
+              className={cn(
+                "transition-all",
+                selectedCategory === "all" && "btn-gradient"
+              )}
+            >
+              Todos
+            </Button>
             {categories.map((category) => (
               <Button
                 key={category.id}
-                variant={selectedCategory === category.id ? "default" : "outline"}
+                variant={selectedCategory === category.slug ? "default" : "outline"}
                 size="sm"
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => setSelectedCategory(category.slug)}
                 className={cn(
                   "transition-all",
-                  selectedCategory === category.id && "btn-gradient"
+                  selectedCategory === category.slug && "btn-gradient"
                 )}
               >
                 {category.name}
@@ -149,7 +145,13 @@ export default function POSPage() {
               <button
                 key={product.id}
                 onClick={() => addToCart(product)}
-                className="group flex flex-col rounded-xl border border-border bg-background p-4 text-left transition-all duration-200 hover:border-primary hover:shadow-md animate-scale-in"
+                disabled={product.stock <= 0}
+                className={cn(
+                  "group flex flex-col rounded-xl border border-border bg-background p-4 text-left transition-all duration-200 animate-scale-in",
+                  product.stock > 0 
+                    ? "hover:border-primary hover:shadow-md" 
+                    : "opacity-50 cursor-not-allowed"
+                )}
                 style={{ animationDelay: `${index * 0.02}s` }}
               >
                 <div className="mb-2 flex items-start justify-between">
@@ -172,7 +174,7 @@ export default function POSPage() {
                   {product.name}
                 </h4>
                 <p className="mt-auto text-lg font-bold text-primary">
-                  S/ {product.price.toFixed(2)}
+                  S/ {Number(product.price).toFixed(2)}
                 </p>
               </button>
             ))}
@@ -190,16 +192,12 @@ export default function POSPage() {
           </div>
           <div className="mt-3 flex items-center gap-2">
             <User className="h-4 w-4 text-muted-foreground" />
-            <Select>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Seleccionar cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="general">Cliente General</SelectItem>
-                <SelectItem value="juan">Juan Pérez</SelectItem>
-                <SelectItem value="maria">María García</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input
+              placeholder="Nombre del cliente (opcional)"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              className="flex-1"
+            />
           </div>
         </div>
 
@@ -288,7 +286,7 @@ export default function POSPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">IGV (18%)</span>
-              <span>S/ {igv.toFixed(2)}</span>
+              <span>S/ {tax.toFixed(2)}</span>
             </div>
             <Separator />
             <div className="flex justify-between text-lg font-bold">
@@ -300,9 +298,17 @@ export default function POSPage() {
           <Button
             className="mt-4 w-full btn-gradient"
             size="lg"
-            disabled={cart.length === 0 || !selectedPayment}
+            disabled={cart.length === 0 || !selectedPayment || !activeSession || processing}
+            onClick={handleProcessSale}
           >
-            Procesar Venta
+            {processing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Procesando...
+              </>
+            ) : (
+              "Procesar Venta"
+            )}
           </Button>
         </div>
       </div>
