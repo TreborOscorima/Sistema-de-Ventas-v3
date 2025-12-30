@@ -143,3 +143,45 @@ export function calculateTotal(pricePerHour: number, startTime: string, endTime:
   const hours = calculateDuration(startTime, endTime);
   return pricePerHour * hours;
 }
+
+export async function checkCourtAvailability(
+  courtId: string,
+  date: string,
+  startTime: string,
+  endTime: string,
+  excludeReservationId?: string
+): Promise<{ available: boolean; conflictingReservation?: Reservation }> {
+  let query = supabase
+    .from('reservations')
+    .select('*, court:courts(*)')
+    .eq('court_id', courtId)
+    .eq('reservation_date', date)
+    .neq('status', 'cancelled');
+
+  if (excludeReservationId) {
+    query = query.neq('id', excludeReservationId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  const reservations = (data || []) as unknown as Reservation[];
+
+  // Check for time overlap
+  for (const reservation of reservations) {
+    const resStart = reservation.start_time.slice(0, 5);
+    const resEnd = reservation.end_time.slice(0, 5);
+
+    // Check if times overlap
+    if (
+      (startTime >= resStart && startTime < resEnd) ||
+      (endTime > resStart && endTime <= resEnd) ||
+      (startTime <= resStart && endTime >= resEnd)
+    ) {
+      return { available: false, conflictingReservation: reservation };
+    }
+  }
+
+  return { available: true };
+}

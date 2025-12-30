@@ -16,7 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Court, Reservation, calculateTotal } from "@/lib/reservations";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
+import { Court, Reservation, calculateTotal, checkCourtAvailability } from "@/lib/reservations";
 import { format } from "date-fns";
 
 interface ReservationFormProps {
@@ -37,6 +39,11 @@ export function ReservationForm({
   reservation
 }: ReservationFormProps) {
   const [loading, setLoading] = useState(false);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState<{
+    available: boolean;
+    conflictingReservation?: Reservation;
+  } | null>(null);
   const [formData, setFormData] = useState({
     court_id: '',
     customer_name: '',
@@ -74,15 +81,71 @@ export function ReservationForm({
     }
   }, [reservation, courts, open]);
 
+  // Check availability when court, date, or time changes
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (!formData.court_id || !formData.start_time || !formData.end_time) {
+        setAvailabilityStatus(null);
+        return;
+      }
+
+      // Validate time order
+      if (formData.start_time >= formData.end_time) {
+        setAvailabilityStatus(null);
+        return;
+      }
+
+      setCheckingAvailability(true);
+      try {
+        const result = await checkCourtAvailability(
+          formData.court_id,
+          format(selectedDate, 'yyyy-MM-dd'),
+          formData.start_time,
+          formData.end_time,
+          reservation?.id
+        );
+        setAvailabilityStatus(result);
+      } catch (error) {
+        console.error('Error checking availability:', error);
+        setAvailabilityStatus(null);
+      } finally {
+        setCheckingAvailability(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(checkAvailability, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [formData.court_id, formData.start_time, formData.end_time, selectedDate, reservation?.id]);
+
   const selectedCourt = courts.find(c => c.id === formData.court_id);
   const totalAmount = selectedCourt 
     ? calculateTotal(selectedCourt.price_per_hour, formData.start_time, formData.end_time)
     : 0;
 
+  const isTimeValid = formData.start_time < formData.end_time;
+  const canSubmit = isTimeValid && availabilityStatus?.available && !checkingAvailability;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!canSubmit) return;
+    
     setLoading(true);
     try {
+      // Double-check availability before submitting
+      const finalCheck = await checkCourtAvailability(
+        formData.court_id,
+        format(selectedDate, 'yyyy-MM-dd'),
+        formData.start_time,
+        formData.end_time,
+        reservation?.id
+      );
+
+      if (!finalCheck.available) {
+        setAvailabilityStatus(finalCheck);
+        return;
+      }
+
       await onSubmit({
         ...formData,
         reservation_date: format(selectedDate, 'yyyy-MM-dd'),
@@ -193,6 +256,42 @@ export function ReservationForm({
             </div>
           </div>
 
+          {/* Availability Status */}
+          {formData.court_id && formData.start_time && formData.end_time && (
+            <div>
+              {checkingAvailability ? (
+                <Alert>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <AlertDescription>Verificando disponibilidad...</AlertDescription>
+                </Alert>
+              ) : !isTimeValid ? (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    La hora de fin debe ser posterior a la hora de inicio
+                  </AlertDescription>
+                </Alert>
+              ) : availabilityStatus?.available ? (
+                <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-700 dark:text-green-400">
+                    Horario disponible
+                  </AlertDescription>
+                </Alert>
+              ) : availabilityStatus?.conflictingReservation ? (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Horario no disponible. Ya existe una reserva de{' '}
+                    <strong>{availabilityStatus.conflictingReservation.customer_name}</strong>{' '}
+                    de {availabilityStatus.conflictingReservation.start_time.slice(0, 5)} a{' '}
+                    {availabilityStatus.conflictingReservation.end_time.slice(0, 5)}
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+            </div>
+          )}
+
           {reservation && (
             <div>
               <Label htmlFor="status">Estado</Label>
@@ -236,7 +335,7 @@ export function ReservationForm({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !canSubmit}>
               {loading ? 'Guardando...' : (reservation ? 'Actualizar' : 'Crear Reserva')}
             </Button>
           </div>
