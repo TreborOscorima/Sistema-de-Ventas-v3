@@ -7,16 +7,19 @@ import {
   CreditCard,
   Banknote,
   Smartphone,
-  User,
   ShoppingBag,
   Loader2,
   AlertCircle,
+  UserCheck,
+  Receipt,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -33,8 +36,11 @@ export default function POSPage() {
   const {
     categories,
     products,
+    customers,
     cart,
     selectedPayment,
+    selectedCustomer,
+    isCredit,
     loading,
     processing,
     activeSession,
@@ -42,6 +48,8 @@ export default function POSPage() {
     tax,
     total,
     setSelectedPayment,
+    setSelectedCustomer,
+    setIsCredit,
     addToCart,
     updateQuantity,
     removeFromCart,
@@ -50,7 +58,6 @@ export default function POSPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [customerName, setCustomerName] = useState("");
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -67,8 +74,31 @@ export default function POSPage() {
   ];
 
   const handleProcessSale = async () => {
-    await processSale(customerName || undefined);
-    setCustomerName("");
+    await processSale(selectedCustomer?.name);
+  };
+
+  const handleCustomerChange = (customerId: string) => {
+    if (customerId === "none") {
+      setSelectedCustomer(null);
+      setIsCredit(false);
+    } else {
+      const customer = customers.find(c => c.id === customerId);
+      setSelectedCustomer(customer || null);
+    }
+  };
+
+  const handleCreditToggle = (checked: boolean) => {
+    if (checked && !selectedCustomer) {
+      return; // Can't enable credit without customer
+    }
+    setIsCredit(checked);
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('es-PE', {
+      style: 'currency',
+      currency: 'PEN'
+    }).format(value);
   };
 
   if (loading) {
@@ -190,14 +220,66 @@ export default function POSPage() {
             <h2 className="text-lg font-semibold">Carrito de Venta</h2>
             <Badge variant="secondary">{cart.length} items</Badge>
           </div>
-          <div className="mt-3 flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Nombre del cliente (opcional)"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              className="flex-1"
-            />
+          
+          {/* Customer Selector */}
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+              <Select
+                value={selectedCustomer?.id || "none"}
+                onValueChange={handleCustomerChange}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Seleccionar cliente (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin cliente</SelectItem>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer.id} value={customer.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{customer.name}</span>
+                        {customer.balance !== 0 && (
+                          <span className={cn(
+                            "text-xs ml-2",
+                            customer.balance > 0 ? "text-green-600" : "text-red-600"
+                          )}>
+                            ({formatCurrency(customer.balance)})
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Credit Sale Toggle */}
+            {selectedCustomer && (
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="credit-toggle" className="text-sm cursor-pointer">
+                    Venta a crédito
+                  </Label>
+                </div>
+                <Switch
+                  id="credit-toggle"
+                  checked={isCredit}
+                  onCheckedChange={handleCreditToggle}
+                />
+              </div>
+            )}
+
+            {isCredit && selectedCustomer && (
+              <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <p className="text-xs text-amber-600">
+                  Se cargará S/ {total.toFixed(2)} a la cuenta de {selectedCustomer.name}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Saldo actual: {formatCurrency(selectedCustomer.balance)}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -296,9 +378,12 @@ export default function POSPage() {
           </div>
 
           <Button
-            className="mt-4 w-full btn-gradient"
+            className={cn(
+              "mt-4 w-full",
+              isCredit ? "bg-amber-600 hover:bg-amber-700" : "btn-gradient"
+            )}
             size="lg"
-            disabled={cart.length === 0 || !selectedPayment || !activeSession || processing}
+            disabled={cart.length === 0 || !selectedPayment || !activeSession || processing || (isCredit && !selectedCustomer)}
             onClick={handleProcessSale}
           >
             {processing ? (
@@ -306,6 +391,8 @@ export default function POSPage() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Procesando...
               </>
+            ) : isCredit ? (
+              "Registrar Crédito"
             ) : (
               "Procesar Venta"
             )}
