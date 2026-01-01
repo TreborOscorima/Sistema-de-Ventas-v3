@@ -11,6 +11,7 @@ import {
   createSale,
   mapPaymentMethod
 } from '@/lib/sales';
+import { Customer, getCustomers } from '@/lib/customers';
 
 export function usePOS() {
   const { user } = useAuth();
@@ -19,20 +20,26 @@ export function usePOS() {
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isCredit, setIsCredit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
   const loadData = useCallback(async () => {
+    if (!user) return;
     try {
       setLoading(true);
-      const [cats, prods] = await Promise.all([
+      const [cats, prods, custs] = await Promise.all([
         getCategories(),
-        getProducts()
+        getProducts(),
+        getCustomers(user.id)
       ]);
       setCategories(cats);
       setProducts(prods);
+      setCustomers(custs);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error al cargar datos';
       toast({
@@ -43,7 +50,7 @@ export function usePOS() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, user]);
 
   useEffect(() => {
     loadData();
@@ -115,6 +122,8 @@ export function usePOS() {
   const clearCart = () => {
     setCart([]);
     setSelectedPayment(null);
+    setSelectedCustomer(null);
+    setIsCredit(false);
   };
 
   const processSale = async (customerName?: string) => {
@@ -131,6 +140,16 @@ export function usePOS() {
       return null;
     }
 
+    // Credit sales require a selected customer
+    if (isCredit && !selectedCustomer) {
+      toast({
+        title: 'Cliente requerido',
+        description: 'Debes seleccionar un cliente para ventas a crédito',
+        variant: 'destructive'
+      });
+      return null;
+    }
+
     try {
       setProcessing(true);
       
@@ -139,25 +158,31 @@ export function usePOS() {
         activeSession.id,
         cart,
         selectedPayment,
-        customerName
+        selectedCustomer?.name || customerName,
+        selectedCustomer?.id,
+        isCredit
       );
 
-      // Register movement in cashbox
-      const paymentMethodForCashbox = mapPaymentMethod(selectedPayment);
-      await addMovement(
-        'sale',
-        sale.total,
-        `Venta #${sale.id.slice(0, 8)}`,
-        paymentMethodForCashbox
-      );
+      // Register movement in cashbox (only if not credit)
+      if (!isCredit) {
+        const paymentMethodForCashbox = mapPaymentMethod(selectedPayment);
+        await addMovement(
+          'sale',
+          sale.total,
+          `Venta #${sale.id.slice(0, 8)}`,
+          paymentMethodForCashbox
+        );
+      }
 
       toast({
-        title: 'Venta procesada',
-        description: `Total: S/ ${sale.total.toFixed(2)}`
+        title: isCredit ? 'Venta a crédito registrada' : 'Venta procesada',
+        description: isCredit 
+          ? `Crédito de S/ ${sale.total.toFixed(2)} para ${selectedCustomer?.name}`
+          : `Total: S/ ${sale.total.toFixed(2)}`
       });
 
       clearCart();
-      await loadData(); // Refresh products to get updated stock
+      await loadData(); // Refresh products and customers
       await refreshCashbox();
       
       return sale;
@@ -181,8 +206,11 @@ export function usePOS() {
   return {
     categories,
     products,
+    customers,
     cart,
     selectedPayment,
+    selectedCustomer,
+    isCredit,
     loading,
     processing,
     activeSession,
@@ -190,6 +218,8 @@ export function usePOS() {
     tax,
     total,
     setSelectedPayment,
+    setSelectedCustomer,
+    setIsCredit,
     addToCart,
     updateQuantity,
     removeFromCart,

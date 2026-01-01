@@ -76,7 +76,9 @@ export async function createSale(
   sessionId: string | null,
   items: CartItem[],
   paymentMethod: string,
-  customerName?: string
+  customerName?: string,
+  customerId?: string,
+  isCredit?: boolean
 ): Promise<Sale> {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.18;
@@ -89,6 +91,7 @@ export async function createSale(
       user_id: userId,
       session_id: sessionId,
       customer_name: customerName || null,
+      customer_id: customerId || null,
       payment_method: paymentMethod,
       subtotal,
       tax,
@@ -118,23 +121,33 @@ export async function createSale(
 
   // Update stock for each product
   for (const item of items) {
-    const { error: stockError } = await supabase
-      .from('products')
-      .update({ stock: supabase.rpc ? undefined : undefined })
-      .eq('id', item.id);
-    
-    // Update stock using raw SQL-like approach
     const { data: product } = await supabase
       .from('products')
       .select('stock')
       .eq('id', item.id)
-      .single();
+      .maybeSingle();
     
     if (product) {
       await supabase
         .from('products')
         .update({ stock: product.stock - item.quantity })
         .eq('id', item.id);
+    }
+  }
+
+  // If sale is on credit, update customer balance
+  if (isCredit && customerId) {
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('balance')
+      .eq('id', customerId)
+      .maybeSingle();
+    
+    if (customer) {
+      await supabase
+        .from('customers')
+        .update({ balance: customer.balance - total })
+        .eq('id', customerId);
     }
   }
 
