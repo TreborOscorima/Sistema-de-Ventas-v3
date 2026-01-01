@@ -14,6 +14,7 @@ import CajaPage from "./pages/CajaPage";
 import ReservasPage from "./pages/ReservasPage";
 import AuthPage from "./pages/AuthPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import ClientesPage from "./pages/ClientesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,7 +34,7 @@ const App = () => (
                 <Route path="/pos" element={<POSPage />} />
                 <Route path="/productos" element={<ProductsPage />} />
                 <Route path="/categorias" element={<PlaceholderPage />} />
-                <Route path="/clientes" element={<PlaceholderPage />} />
+                <Route path="/clientes" element={<ClientesPage />} />
                 <Route path="/ventas" element={<SalesPage />} />
                 <Route path="/caja" element={<CajaPage />} />
                 <Route path="/reservas" element={<ReservasPage />} />
