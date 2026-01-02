@@ -31,6 +31,7 @@ import { useCustomers } from '@/hooks/use-customers';
 import { CustomerForm } from '@/components/customers/CustomerForm';
 import { CustomerBalanceDialog } from '@/components/customers/CustomerBalanceDialog';
 import { CustomerPurchaseHistory } from '@/components/customers/CustomerPurchaseHistory';
+import { CustomerMovementsHistory } from '@/components/customers/CustomerMovementsHistory';
 import { Customer } from '@/lib/customers';
 import {
   Plus,
@@ -43,7 +44,8 @@ import {
   Users,
   Loader2,
   Mail,
-  Phone
+  Phone,
+  History
 } from 'lucide-react';
 
 export default function ClientesPage() {
@@ -61,6 +63,7 @@ export default function ClientesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [movementsDialogOpen, setMovementsDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
@@ -89,6 +92,11 @@ export default function ClientesPage() {
   const handleHistoryClick = (customer: Customer) => {
     setSelectedCustomer(customer);
     setHistoryDialogOpen(true);
+  };
+
+  const handleMovementsClick = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setMovementsDialogOpen(true);
   };
 
   const handleDeleteClick = (customer: Customer) => {
@@ -267,6 +275,10 @@ export default function ClientesPage() {
                             <ShoppingBag className="mr-2 h-4 w-4" />
                             Ver Compras
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleMovementsClick(customer)}>
+                            <History className="mr-2 h-4 w-4" />
+                            Historial de Saldo
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             onClick={() => handleDeleteClick(customer)}
@@ -305,6 +317,11 @@ export default function ClientesPage() {
           <CustomerPurchaseHistory
             open={historyDialogOpen}
             onOpenChange={setHistoryDialogOpen}
+            customer={selectedCustomer}
+          />
+          <CustomerMovementsHistory
+            open={movementsDialogOpen}
+            onOpenChange={setMovementsDialogOpen}
             customer={selectedCustomer}
           />
         </>
