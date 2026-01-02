@@ -9,7 +9,7 @@ import {
   deleteCustomer,
   getCustomerSales
 } from '@/lib/customers';
-
+import { createBalanceMovement } from '@/lib/customer-movements';
 export function useCustomers() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -121,13 +121,43 @@ export function useCustomers() {
   };
 
   const adjustBalance = async (customerId: string, amount: number, isDebit: boolean) => {
+    if (!user) return null;
+    
     const customer = customers.find(c => c.id === customerId);
     if (!customer) return null;
 
     const adjustedAmount = isDebit ? -Math.abs(amount) : Math.abs(amount);
     const newBalance = customer.balance + adjustedAmount;
 
-    return editCustomer(customerId, { balance: newBalance });
+    const updated = await editCustomer(customerId, { balance: newBalance });
+    
+    if (updated) {
+      // Record the movement
+      const movementType = isDebit ? 'adjustment_debit' : 'adjustment_credit';
+      const description = isDebit 
+        ? `Cargo manual por ${formatCurrencySimple(Math.abs(amount))}`
+        : `Abono manual por ${formatCurrencySimple(Math.abs(amount))}`;
+      
+      try {
+        await createBalanceMovement(
+          user.id,
+          customerId,
+          movementType,
+          adjustedAmount,
+          newBalance,
+          undefined,
+          description
+        );
+      } catch (error) {
+        console.error('Error recording balance movement:', error);
+      }
+    }
+    
+    return updated;
+  };
+
+  const formatCurrencySimple = (value: number) => {
+    return `S/ ${value.toFixed(2)}`;
   };
 
   const filteredCustomers = customers.filter(customer =>

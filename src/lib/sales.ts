@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { createBalanceMovement } from '@/lib/customer-movements';
 
 export interface Category {
   id: string;
@@ -135,7 +136,7 @@ export async function createSale(
     }
   }
 
-  // If sale is on credit, update customer balance
+  // If sale is on credit, update customer balance and record movement
   if (isCredit && customerId) {
     const { data: customer } = await supabase
       .from('customers')
@@ -144,10 +145,22 @@ export async function createSale(
       .maybeSingle();
     
     if (customer) {
+      const newBalance = customer.balance - total;
       await supabase
         .from('customers')
-        .update({ balance: customer.balance - total })
+        .update({ balance: newBalance })
         .eq('id', customerId);
+      
+      // Record the balance movement
+      await createBalanceMovement(
+        userId,
+        customerId,
+        'credit_sale',
+        -total,
+        newBalance,
+        sale.id,
+        `Venta a crédito - S/ ${total.toFixed(2)}`
+      );
     }
   }
 
