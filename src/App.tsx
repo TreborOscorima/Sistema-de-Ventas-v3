@@ -16,6 +16,7 @@ import AuthPage from "./pages/AuthPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import ReportesPage from "./pages/ReportesPage";
 import ClientesPage from "./pages/ClientesPage";
+import ConfiguracionPage from "./pages/ConfiguracionPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,7 +41,7 @@ const App = () => (
                 <Route path="/caja" element={<CajaPage />} />
                 <Route path="/reservas" element={<ReservasPage />} />
                 <Route path="/reportes" element={<ReportesPage />} />
-                <Route path="/configuracion" element={<PlaceholderPage />} />
+                <Route path="/configuracion" element={<ConfiguracionPage />} />
               </Route>
             </Route>
             <Route path="*" element={<NotFound />} />

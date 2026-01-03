@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_settings: {
+        Row: {
+          address: string | null
+          business_name: string
+          created_at: string
+          email: string | null
+          id: string
+          logo_url: string | null
+          phone: string | null
+          receipt_footer: string | null
+          receipt_header: string | null
+          show_logo_on_receipt: boolean
+          show_tax_on_receipt: boolean
+          tax_id: string | null
+          tax_name: string
+          tax_rate: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          business_name?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          phone?: string | null
+          receipt_footer?: string | null
+          receipt_header?: string | null
+          show_logo_on_receipt?: boolean
+          show_tax_on_receipt?: boolean
+          tax_id?: string | null
+          tax_name?: string
+          tax_rate?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          business_name?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          phone?: string | null
+          receipt_footer?: string | null
+          receipt_header?: string | null
+          show_logo_on_receipt?: boolean
+          show_tax_on_receipt?: boolean
+          tax_id?: string | null
+          tax_name?: string
+          tax_rate?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cashbox_movements: {
         Row: {
           amount: number
