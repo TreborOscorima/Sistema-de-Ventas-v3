@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, forwardRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useBusinessSettings, useUpdateBusinessSettings } from "@/hooks/use-settings";
 import { Receipt, Image, FileText, Save, Loader2 } from "lucide-react";
 
-export function ReceiptSettings() {
+export const ReceiptSettings = forwardRef<HTMLDivElement>((_, ref) => {
   const { data: settings, isLoading } = useBusinessSettings();
   const updateSettings = useUpdateBusinessSettings();
 
@@ -160,4 +160,6 @@ export function ReceiptSettings() {
       </CardContent>
     </Card>
   );
-}
+});
+
+ReceiptSettings.displayName = "ReceiptSettings";

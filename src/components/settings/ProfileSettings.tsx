@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUpdateUserProfile, useUpdatePassword } from "@/hooks/use-settings";
 import { User, Lock, Mail, Save, Eye, EyeOff } from "lucide-react";
 
-export function ProfileSettings() {
+export const ProfileSettings = forwardRef<HTMLDivElement>((_, ref) => {
   const { user } = useAuth();
   const updateProfile = useUpdateUserProfile();
   const updatePassword = useUpdatePassword();
@@ -168,4 +168,6 @@ export function ProfileSettings() {
       </Card>
     </div>
   );
-}
+});
+
+ProfileSettings.displayName = "ProfileSettings";

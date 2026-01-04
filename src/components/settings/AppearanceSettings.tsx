@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, forwardRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -6,7 +6,7 @@ import { Palette, Sun, Moon, Monitor } from "lucide-react";
 
 type Theme = "light" | "dark" | "system";
 
-export function AppearanceSettings() {
+export const AppearanceSettings = forwardRef<HTMLDivElement>((_, ref) => {
   const [theme, setTheme] = useState<Theme>("system");
 
   useEffect(() => {
@@ -81,4 +81,6 @@ export function AppearanceSettings() {
       </CardContent>
     </Card>
   );
-}
+});
+
+AppearanceSettings.displayName = "AppearanceSettings";

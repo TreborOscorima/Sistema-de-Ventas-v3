@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { BusinessSettings } from "@/components/settings/BusinessSettings";
@@ -7,11 +7,11 @@ import { ReceiptSettings } from "@/components/settings/ReceiptSettings";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { User, Building2, Percent, Receipt, Palette, Settings } from "lucide-react";
 
-export default function ConfiguracionPage() {
+const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
   const [activeTab, setActiveTab] = useState("profile");
 
   return (
-    <div className="space-y-6">
+    <div ref={ref} className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Settings className="h-6 w-6" />
@@ -83,4 +83,8 @@ export default function ConfiguracionPage() {
       </Tabs>
     </div>
   );
-}
+});
+
+ConfiguracionPage.displayName = "ConfiguracionPage";
+
+export default ConfiguracionPage;
