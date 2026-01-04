@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, forwardRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useBusinessSettings, useUpdateBusinessSettings } from "@/hooks/use-settings";
 import { Percent, Receipt, Save, Loader2 } from "lucide-react";
 
-export function TaxSettings() {
+export const TaxSettings = forwardRef<HTMLDivElement>((_, ref) => {
   const { data: settings, isLoading } = useBusinessSettings();
   const updateSettings = useUpdateBusinessSettings();
 
@@ -130,4 +130,6 @@ export function TaxSettings() {
       </CardContent>
     </Card>
   );
-}
+});
+
+TaxSettings.displayName = "TaxSettings";
