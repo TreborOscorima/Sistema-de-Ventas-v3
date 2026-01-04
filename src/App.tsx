@@ -9,11 +9,11 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import POSPage from "./pages/POSPage";
 import ProductsPage from "./pages/ProductsPage";
+import CategoriasPage from "./pages/CategoriasPage";
 import SalesPage from "./pages/SalesPage";
 import CajaPage from "./pages/CajaPage";
 import ReservasPage from "./pages/ReservasPage";
 import AuthPage from "./pages/AuthPage";
-import PlaceholderPage from "./pages/PlaceholderPage";
 import ReportesPage from "./pages/ReportesPage";
 import ClientesPage from "./pages/ClientesPage";
 import ConfiguracionPage from "./pages/ConfiguracionPage";
@@ -35,7 +35,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/pos" element={<POSPage />} />
                 <Route path="/productos" element={<ProductsPage />} />
-                <Route path="/categorias" element={<PlaceholderPage />} />
+                <Route path="/categorias" element={<CategoriasPage />} />
                 <Route path="/clientes" element={<ClientesPage />} />
                 <Route path="/ventas" element={<SalesPage />} />
                 <Route path="/caja" element={<CajaPage />} />
