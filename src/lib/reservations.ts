@@ -29,15 +29,60 @@ export interface Reservation {
   court?: Court;
 }
 
-export async function getCourts(): Promise<Court[]> {
-  const { data, error } = await supabase
-    .from('courts')
-    .select('*')
-    .eq('is_active', true)
-    .order('name');
+export async function getCourts(includeInactive = false): Promise<Court[]> {
+  let query = supabase.from('courts').select('*').order('name');
+  
+  if (!includeInactive) {
+    query = query.eq('is_active', true);
+  }
 
+  const { data, error } = await query;
   if (error) throw error;
   return data || [];
+}
+
+export async function createCourt(court: {
+  name: string;
+  description?: string;
+  sport_type: string;
+  price_per_hour: number;
+  is_active?: boolean;
+}): Promise<Court> {
+  const { data, error } = await supabase
+    .from('courts')
+    .insert({
+      ...court,
+      is_active: court.is_active ?? true
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCourt(
+  id: string,
+  updates: Partial<Omit<Court, 'id' | 'created_at' | 'updated_at'>>
+): Promise<Court> {
+  const { data, error } = await supabase
+    .from('courts')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCourt(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('courts')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
 export async function getReservations(startDate?: string, endDate?: string): Promise<Reservation[]> {

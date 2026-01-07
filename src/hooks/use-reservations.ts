@@ -8,7 +8,10 @@ import {
   createReservation, 
   updateReservation, 
   deleteReservation,
-  updateReservationStatus 
+  updateReservationStatus,
+  createCourt,
+  updateCourt,
+  deleteCourt
 } from '@/lib/reservations';
 import { toast } from 'sonner';
 
@@ -18,9 +21,9 @@ export function useReservations() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const loadCourts = useCallback(async () => {
+  const loadCourts = useCallback(async (includeInactive = false) => {
     try {
-      const data = await getCourts();
+      const data = await getCourts(includeInactive);
       setCourts(data);
     } catch (error) {
       console.error('Error loading courts:', error);
@@ -119,6 +122,42 @@ export function useReservations() {
     loadReservations(date);
   };
 
+  const addCourt = async (court: Parameters<typeof createCourt>[0]) => {
+    try {
+      await createCourt(court);
+      toast.success('Cancha creada exitosamente');
+      await loadCourts(true);
+    } catch (error) {
+      console.error('Error creating court:', error);
+      toast.error('Error al crear la cancha');
+      throw error;
+    }
+  };
+
+  const editCourt = async (id: string, updates: Parameters<typeof updateCourt>[1]) => {
+    try {
+      await updateCourt(id, updates);
+      toast.success('Cancha actualizada');
+      await loadCourts(true);
+    } catch (error) {
+      console.error('Error updating court:', error);
+      toast.error('Error al actualizar la cancha');
+      throw error;
+    }
+  };
+
+  const removeCourt = async (id: string) => {
+    try {
+      await deleteCourt(id);
+      toast.success('Cancha eliminada');
+      await loadCourts(true);
+    } catch (error) {
+      console.error('Error deleting court:', error);
+      toast.error('Error al eliminar la cancha');
+      throw error;
+    }
+  };
+
   return {
     courts,
     reservations,
@@ -131,6 +170,10 @@ export function useReservations() {
     changeStatus,
     loadReservations,
     loadAllReservations,
+    loadCourts,
+    addCourt,
+    editCourt,
+    removeCourt,
     refresh: () => loadReservations()
   };
 }
