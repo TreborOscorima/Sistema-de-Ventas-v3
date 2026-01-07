@@ -26,8 +26,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Court } from "@/lib/reservations";
-import { useEffect } from "react";
+import { Court, uploadCourtImage, deleteCourtImage } from "@/lib/reservations";
+import { useEffect, useState, useRef } from "react";
+import { ImagePlus, X, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const courtSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
@@ -42,7 +44,7 @@ type CourtFormData = z.infer<typeof courtSchema>;
 interface CourtFormProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: CourtFormData) => Promise<void>;
+  onSubmit: (data: CourtFormData & { image_url?: string }) => Promise<void>;
   court?: Court | null;
 }
 
@@ -59,6 +61,10 @@ const sportTypes = [
 ];
 
 export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<CourtFormData>({
     resolver: zodResolver(courtSchema),
     defaultValues: {
@@ -79,6 +85,7 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
         price_per_hour: court.price_per_hour,
         is_active: court.is_active,
       });
+      setImageUrl(court.image_url);
     } else {
       form.reset({
         name: "",
@@ -87,17 +94,63 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
         price_per_hour: 0,
         is_active: true,
       });
+      setImageUrl(null);
     }
   }, [court, form]);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error("Por favor selecciona un archivo de imagen");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen no debe superar los 5MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Delete old image if exists
+      if (imageUrl) {
+        await deleteCourtImage(imageUrl);
+      }
+      
+      const url = await uploadCourtImage(file);
+      setImageUrl(url);
+      toast.success("Imagen subida correctamente");
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error("Error al subir la imagen");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (imageUrl) {
+      try {
+        await deleteCourtImage(imageUrl);
+        setImageUrl(null);
+        toast.success("Imagen eliminada");
+      } catch (error) {
+        console.error('Error deleting image:', error);
+        toast.error("Error al eliminar la imagen");
+      }
+    }
+  };
+
   const handleSubmit = async (data: CourtFormData) => {
-    await onSubmit(data);
+    await onSubmit({ ...data, image_url: imageUrl || undefined });
     onClose();
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {court ? "Editar Cancha" : "Nueva Cancha"}
@@ -106,6 +159,52 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Foto de la cancha</label>
+              <div className="flex items-center gap-4">
+                {imageUrl ? (
+                  <div className="relative w-32 h-24 rounded-lg overflow-hidden border">
+                    <img
+                      src={imageUrl}
+                      alt="Cancha"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="w-32 h-24 border-2 border-dashed border-muted-foreground/25 rounded-lg flex flex-col items-center justify-center gap-1 hover:border-muted-foreground/50 transition-colors disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    ) : (
+                      <>
+                        <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">Agregar foto</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
             <FormField
               control={form.control}
               name="name"
@@ -207,7 +306,7 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button type="submit">
+              <Button type="submit" disabled={uploading}>
                 {court ? "Guardar Cambios" : "Crear Cancha"}
               </Button>
             </div>

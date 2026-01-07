@@ -7,6 +7,7 @@ export interface Court {
   sport_type: string;
   price_per_hour: number;
   is_active: boolean;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -41,12 +42,40 @@ export async function getCourts(includeInactive = false): Promise<Court[]> {
   return data || [];
 }
 
+export async function uploadCourtImage(file: File): Promise<string> {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${crypto.randomUUID()}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('court-images')
+    .upload(filePath, file);
+
+  if (uploadError) throw uploadError;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('court-images')
+    .getPublicUrl(filePath);
+
+  return publicUrl;
+}
+
+export async function deleteCourtImage(imageUrl: string): Promise<void> {
+  const fileName = imageUrl.split('/').pop();
+  if (!fileName) return;
+
+  await supabase.storage
+    .from('court-images')
+    .remove([fileName]);
+}
+
 export async function createCourt(court: {
   name: string;
   description?: string;
   sport_type: string;
   price_per_hour: number;
   is_active?: boolean;
+  image_url?: string;
 }): Promise<Court> {
   const { data, error } = await supabase
     .from('courts')

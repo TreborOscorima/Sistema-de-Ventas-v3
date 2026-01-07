@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, Trash2, DollarSign } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, DollarSign, ImageOff } from "lucide-react";
 
 interface CourtListProps {
   courts: Court[];
@@ -44,8 +44,24 @@ export function CourtList({ courts, onEdit, onDelete }: CourtListProps) {
       {courts.map((court) => (
         <Card key={court.id}>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
+            <div className="flex items-start gap-4">
+              {/* Court Image */}
+              <div className="w-20 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                {court.image_url ? (
+                  <img
+                    src={court.image_url}
+                    alt={court.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageOff className="h-6 w-6 text-muted-foreground/50" />
+                  </div>
+                )}
+              </div>
+
+              {/* Court Info */}
+              <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold">{court.name}</h3>
                   <Badge variant={court.is_active ? "default" : "secondary"}>
