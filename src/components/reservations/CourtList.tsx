@@ -8,7 +8,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, Trash2, DollarSign, ImageOff } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, DollarSign } from "lucide-react";
+
+// Default court images by sport type
+import futbolDefault from "@/assets/default-courts/futbol.jpg";
+import voleyDefault from "@/assets/default-courts/voley.jpg";
+import padelDefault from "@/assets/default-courts/padel.jpg";
+import tenisDefault from "@/assets/default-courts/tenis.jpg";
+import basquetDefault from "@/assets/default-courts/basquet.jpg";
+
+const defaultCourtImages: Record<string, string> = {
+  futbol: futbolDefault,
+  futbol5: futbolDefault,
+  futbol7: futbolDefault,
+  futbol11: futbolDefault,
+  padel: padelDefault,
+  tenis: tenisDefault,
+  basquet: basquetDefault,
+  voley: voleyDefault,
+  otro: futbolDefault,
+};
 
 interface CourtListProps {
   courts: Court[];
@@ -47,17 +66,11 @@ export function CourtList({ courts, onEdit, onDelete }: CourtListProps) {
             <div className="flex items-start gap-4">
               {/* Court Image */}
               <div className="w-20 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                {court.image_url ? (
-                  <img
-                    src={court.image_url}
-                    alt={court.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ImageOff className="h-6 w-6 text-muted-foreground/50" />
-                  </div>
-                )}
+                <img
+                  src={court.image_url || defaultCourtImages[court.sport_type] || futbolDefault}
+                  alt={court.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
 
               {/* Court Info */}
