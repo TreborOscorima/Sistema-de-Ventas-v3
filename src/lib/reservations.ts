@@ -8,6 +8,8 @@ export interface Court {
   price_per_hour: number;
   is_active: boolean;
   image_url: string | null;
+  opening_time: string;
+  closing_time: string;
   created_at: string;
   updated_at: string;
 }
@@ -76,6 +78,8 @@ export async function createCourt(court: {
   price_per_hour: number;
   is_active?: boolean;
   image_url?: string;
+  opening_time?: string;
+  closing_time?: string;
 }): Promise<Court> {
   const { data, error } = await supabase
     .from('courts')
