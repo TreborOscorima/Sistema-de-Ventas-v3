@@ -37,6 +37,8 @@ const courtSchema = z.object({
   sport_type: z.string().min(1, "El tipo de deporte es requerido"),
   price_per_hour: z.number().min(0, "El precio debe ser mayor o igual a 0"),
   is_active: z.boolean(),
+  opening_time: z.string().min(1, "La hora de apertura es requerida"),
+  closing_time: z.string().min(1, "La hora de cierre es requerida"),
 });
 
 type CourtFormData = z.infer<typeof courtSchema>;
@@ -44,9 +46,18 @@ type CourtFormData = z.infer<typeof courtSchema>;
 interface CourtFormProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: CourtFormData & { image_url?: string }) => Promise<void>;
+  onSubmit: (data: CourtFormData & { image_url?: string; opening_time: string; closing_time: string }) => Promise<void>;
   court?: Court | null;
 }
+
+const timeOptions = (() => {
+  const times: string[] = [];
+  for (let h = 0; h < 24; h++) {
+    times.push(`${h.toString().padStart(2, '0')}:00`);
+    times.push(`${h.toString().padStart(2, '0')}:30`);
+  }
+  return times;
+})();
 
 const sportTypes = [
   { value: "futbol", label: "Fútbol" },
@@ -73,6 +84,8 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
       sport_type: "",
       price_per_hour: 0,
       is_active: true,
+      opening_time: "00:00",
+      closing_time: "23:30",
     },
   });
 
@@ -84,6 +97,8 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
         sport_type: court.sport_type,
         price_per_hour: court.price_per_hour,
         is_active: court.is_active,
+        opening_time: court.opening_time?.slice(0, 5) || "00:00",
+        closing_time: court.closing_time?.slice(0, 5) || "23:30",
       });
       setImageUrl(court.image_url);
     } else {
@@ -93,6 +108,8 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
         sport_type: "",
         price_per_hour: 0,
         is_active: true,
+        opening_time: "00:00",
+        closing_time: "23:30",
       });
       setImageUrl(null);
     }
@@ -144,7 +161,12 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
   };
 
   const handleSubmit = async (data: CourtFormData) => {
-    await onSubmit({ ...data, image_url: imageUrl || undefined });
+    await onSubmit({ 
+      ...data, 
+      image_url: imageUrl || undefined,
+      opening_time: data.opening_time,
+      closing_time: data.closing_time
+    });
     onClose();
   };
 
@@ -280,6 +302,61 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
                 </FormItem>
               )}
             />
+
+            {/* Horarios de disponibilidad */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Horario de Disponibilidad</label>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="opening_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Apertura</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Hora apertura" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {timeOptions.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="closing_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cierre</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Hora cierre" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {timeOptions.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             <FormField
               control={form.control}

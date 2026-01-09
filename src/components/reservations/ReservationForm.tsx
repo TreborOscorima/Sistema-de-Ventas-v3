@@ -157,11 +157,29 @@ export function ReservationForm({
     }
   };
 
-  const timeSlots = [];
-  for (let h = 6; h <= 23; h++) {
-    timeSlots.push(`${h.toString().padStart(2, '0')}:00`);
-    timeSlots.push(`${h.toString().padStart(2, '0')}:30`);
-  }
+  // Generate time slots based on selected court's availability
+  const generateTimeSlots = () => {
+    const slots: string[] = [];
+    const court = selectedCourt;
+    const openingHour = court?.opening_time ? parseInt(court.opening_time.slice(0, 2)) : 0;
+    const openingMinute = court?.opening_time ? parseInt(court.opening_time.slice(3, 5)) : 0;
+    const closingHour = court?.closing_time ? parseInt(court.closing_time.slice(0, 2)) : 23;
+    const closingMinute = court?.closing_time ? parseInt(court.closing_time.slice(3, 5)) : 30;
+    
+    for (let h = openingHour; h <= closingHour; h++) {
+      for (const m of [0, 30]) {
+        // Skip minutes before opening on opening hour
+        if (h === openingHour && m < openingMinute) continue;
+        // Skip minutes after closing on closing hour
+        if (h === closingHour && m > closingMinute) continue;
+        
+        slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+      }
+    }
+    return slots;
+  };
+  
+  const timeSlots = generateTimeSlots();
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

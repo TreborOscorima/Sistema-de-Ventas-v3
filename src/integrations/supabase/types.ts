@@ -183,34 +183,40 @@ export type Database = {
       }
       courts: {
         Row: {
+          closing_time: string
           created_at: string
           description: string | null
           id: string
           image_url: string | null
           is_active: boolean
           name: string
+          opening_time: string
           price_per_hour: number
           sport_type: string
           updated_at: string
         }
         Insert: {
+          closing_time?: string
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           name: string
+          opening_time?: string
           price_per_hour?: number
           sport_type: string
           updated_at?: string
         }
         Update: {
+          closing_time?: string
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           name?: string
+          opening_time?: string
           price_per_hour?: number
           sport_type?: string
           updated_at?: string
