@@ -122,8 +122,18 @@ export function ReservationForm({
     ? calculateTotal(selectedCourt.price_per_hour, formData.start_time, formData.end_time)
     : 0;
 
+  // Validate time order
   const isTimeValid = formData.start_time < formData.end_time;
-  const canSubmit = isTimeValid && availabilityStatus?.available && !checkingAvailability;
+  
+  // Validate times are within court availability
+  const isWithinCourtHours = (() => {
+    if (!selectedCourt) return true;
+    const openingTime = selectedCourt.opening_time?.slice(0, 5) || '00:00';
+    const closingTime = selectedCourt.closing_time?.slice(0, 5) || '23:30';
+    return formData.start_time >= openingTime && formData.end_time <= closingTime;
+  })();
+
+  const canSubmit = isTimeValid && isWithinCourtHours && availabilityStatus?.available && !checkingAvailability;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,6 +297,14 @@ export function ReservationForm({
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
                     La hora de fin debe ser posterior a la hora de inicio
+                  </AlertDescription>
+                </Alert>
+              ) : !isWithinCourtHours ? (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    El horario seleccionado está fuera del horario de disponibilidad de la cancha 
+                    ({selectedCourt?.opening_time?.slice(0, 5) || '00:00'} - {selectedCourt?.closing_time?.slice(0, 5) || '23:30'})
                   </AlertDescription>
                 </Alert>
               ) : availabilityStatus?.available ? (
