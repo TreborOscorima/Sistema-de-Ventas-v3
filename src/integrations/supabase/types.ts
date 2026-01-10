@@ -190,6 +190,8 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           name: string
+          night_price_per_hour: number | null
+          night_start_time: string | null
           opening_time: string
           price_per_hour: number
           sport_type: string
@@ -203,6 +205,8 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name: string
+          night_price_per_hour?: number | null
+          night_start_time?: string | null
           opening_time?: string
           price_per_hour?: number
           sport_type: string
@@ -216,6 +220,8 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name?: string
+          night_price_per_hour?: number | null
+          night_start_time?: string | null
           opening_time?: string
           price_per_hour?: number
           sport_type?: string

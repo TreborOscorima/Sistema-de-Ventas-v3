@@ -119,7 +119,13 @@ export function ReservationForm({
 
   const selectedCourt = courts.find(c => c.id === formData.court_id);
   const totalAmount = selectedCourt 
-    ? calculateTotal(selectedCourt.price_per_hour, formData.start_time, formData.end_time)
+    ? calculateTotal(
+        selectedCourt.price_per_hour, 
+        formData.start_time, 
+        formData.end_time,
+        selectedCourt.night_price_per_hour,
+        selectedCourt.night_start_time
+      )
     : 0;
 
   // Validate time order

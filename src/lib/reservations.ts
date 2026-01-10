@@ -6,6 +6,8 @@ export interface Court {
   description: string | null;
   sport_type: string;
   price_per_hour: number;
+  night_price_per_hour: number | null;
+  night_start_time: string | null;
   is_active: boolean;
   image_url: string | null;
   opening_time: string;
@@ -76,6 +78,8 @@ export async function createCourt(court: {
   description?: string;
   sport_type: string;
   price_per_hour: number;
+  night_price_per_hour?: number;
+  night_start_time?: string;
   is_active?: boolean;
   image_url?: string;
   opening_time?: string;
@@ -217,9 +221,48 @@ export function calculateDuration(startTime: string, endTime: string): number {
   return (endMinutes - startMinutes) / 60;
 }
 
-export function calculateTotal(pricePerHour: number, startTime: string, endTime: string): number {
-  const hours = calculateDuration(startTime, endTime);
-  return pricePerHour * hours;
+export function calculateTotal(
+  pricePerHour: number, 
+  startTime: string, 
+  endTime: string,
+  nightPricePerHour?: number | null,
+  nightStartTime?: string | null
+): number {
+  // If no night pricing, use simple calculation
+  if (!nightPricePerHour || !nightStartTime) {
+    const hours = calculateDuration(startTime, endTime);
+    return pricePerHour * hours;
+  }
+
+  const nightStart = nightStartTime.slice(0, 5);
+  const [startH, startM] = startTime.split(':').map(Number);
+  const [endH, endM] = endTime.split(':').map(Number);
+  const [nightH, nightM] = nightStart.split(':').map(Number);
+
+  const startMinutes = startH * 60 + startM;
+  const endMinutes = endH * 60 + endM;
+  const nightMinutes = nightH * 60 + nightM;
+
+  // Calculate regular and night hours
+  let regularMinutes = 0;
+  let nightMinutesCount = 0;
+
+  if (endMinutes <= nightMinutes) {
+    // Entire reservation is before night hours
+    regularMinutes = endMinutes - startMinutes;
+  } else if (startMinutes >= nightMinutes) {
+    // Entire reservation is during night hours
+    nightMinutesCount = endMinutes - startMinutes;
+  } else {
+    // Reservation spans both periods
+    regularMinutes = nightMinutes - startMinutes;
+    nightMinutesCount = endMinutes - nightMinutes;
+  }
+
+  const regularHours = regularMinutes / 60;
+  const nightHours = nightMinutesCount / 60;
+
+  return (regularHours * pricePerHour) + (nightHours * nightPricePerHour);
 }
 
 export async function checkCourtAvailability(
