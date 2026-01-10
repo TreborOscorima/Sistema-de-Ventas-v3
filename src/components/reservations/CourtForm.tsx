@@ -36,6 +36,8 @@ const courtSchema = z.object({
   description: z.string().optional(),
   sport_type: z.string().min(1, "El tipo de deporte es requerido"),
   price_per_hour: z.number().min(0, "El precio debe ser mayor o igual a 0"),
+  night_price_per_hour: z.number().min(0, "El precio nocturno debe ser mayor o igual a 0").optional(),
+  night_start_time: z.string().optional(),
   is_active: z.boolean(),
   opening_time: z.string().min(1, "La hora de apertura es requerida"),
   closing_time: z.string().min(1, "La hora de cierre es requerida"),
@@ -46,7 +48,7 @@ type CourtFormData = z.infer<typeof courtSchema>;
 interface CourtFormProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: CourtFormData & { image_url?: string; opening_time: string; closing_time: string }) => Promise<void>;
+  onSubmit: (data: CourtFormData & { image_url?: string }) => Promise<void>;
   court?: Court | null;
 }
 
@@ -83,6 +85,8 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
       description: "",
       sport_type: "",
       price_per_hour: 0,
+      night_price_per_hour: undefined,
+      night_start_time: "20:00",
       is_active: true,
       opening_time: "00:00",
       closing_time: "23:30",
@@ -96,6 +100,8 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
         description: court.description || "",
         sport_type: court.sport_type,
         price_per_hour: court.price_per_hour,
+        night_price_per_hour: court.night_price_per_hour || undefined,
+        night_start_time: court.night_start_time?.slice(0, 5) || "20:00",
         is_active: court.is_active,
         opening_time: court.opening_time?.slice(0, 5) || "00:00",
         closing_time: court.closing_time?.slice(0, 5) || "23:30",
@@ -107,6 +113,8 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
         description: "",
         sport_type: "",
         price_per_hour: 0,
+        night_price_per_hour: undefined,
+        night_start_time: "20:00",
         is_active: true,
         opening_time: "00:00",
         closing_time: "23:30",
@@ -164,8 +172,8 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
     await onSubmit({ 
       ...data, 
       image_url: imageUrl || undefined,
-      opening_time: data.opening_time,
-      closing_time: data.closing_time
+      night_price_per_hour: data.night_price_per_hour || undefined,
+      night_start_time: data.night_start_time || "20:00",
     });
     onClose();
   };
@@ -285,6 +293,63 @@ export function CourtForm({ open, onClose, onSubmit, court }: CourtFormProps) {
                 </FormItem>
               )}
             />
+
+            {/* Precio nocturno */}
+            <div className="space-y-2 rounded-lg border p-3">
+              <label className="text-sm font-medium">Precio Nocturno (opcional)</label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Configura un precio diferente para horarios nocturnos
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="night_price_per_hour"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Precio nocturno ($)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="Ej: 15000"
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(val ? parseFloat(val) : undefined);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="night_start_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Desde las</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || "20:00"}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="20:00" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {timeOptions.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             <FormField
               control={form.control}

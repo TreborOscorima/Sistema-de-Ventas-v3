@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, Trash2, DollarSign, Clock } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, DollarSign, Clock, Moon } from "lucide-react";
 
 // Default court images by sport type
 import futbolDefault from "@/assets/default-courts/futbol.jpg";
@@ -81,12 +81,18 @@ export function CourtList({ courts, onEdit, onDelete }: CourtListProps) {
                     {court.is_active ? "Activa" : "Inactiva"}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                   <span>{sportTypeLabels[court.sport_type] || court.sport_type}</span>
                   <span className="flex items-center gap-1">
                     <DollarSign className="h-3 w-3" />
                     {court.price_per_hour.toLocaleString('es-AR')}/hora
                   </span>
+                  {court.night_price_per_hour && (
+                    <span className="flex items-center gap-1">
+                      <Moon className="h-3 w-3" />
+                      {court.night_price_per_hour.toLocaleString('es-AR')}/hora (desde {court.night_start_time?.slice(0, 5) || '20:00'})
+                    </span>
+                  )}
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {court.opening_time?.slice(0, 5) || '00:00'} - {court.closing_time?.slice(0, 5) || '23:30'}
