@@ -85,10 +85,14 @@ export async function createCourt(court: {
   opening_time?: string;
   closing_time?: string;
 }): Promise<Court> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario no autenticado');
+
   const { data, error } = await supabase
     .from('courts')
     .insert({
       ...court,
+      user_id: user.id,
       is_active: court.is_active ?? true
     })
     .select()

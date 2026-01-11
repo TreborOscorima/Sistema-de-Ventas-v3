@@ -64,6 +64,9 @@ export function useProducts() {
   const createProduct = async (productData: ProductFormData) => {
     try {
       setSaving(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuario no autenticado');
+
       const { data, error } = await supabase
         .from("products")
         .insert({
@@ -72,6 +75,7 @@ export function useProducts() {
           stock: productData.stock,
           category_id: productData.category_id,
           is_active: productData.is_active ?? true,
+          user_id: user.id,
         })
         .select(`
           *,

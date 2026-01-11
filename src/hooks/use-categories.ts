@@ -8,6 +8,7 @@ import {
   getCategoryProductCount 
 } from "@/lib/categories";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CategoryWithCount extends Category {
   productCount: number;
@@ -18,6 +19,7 @@ export function useCategories() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const loadCategories = useCallback(async () => {
     try {
@@ -50,9 +52,10 @@ export function useCategories() {
   }, [loadCategories]);
 
   const addCategory = async (name: string) => {
+    if (!user) return false;
     try {
       setSaving(true);
-      await createCategory(name);
+      await createCategory(user.id, name);
       await loadCategories();
       toast({
         title: "Categoría creada",
