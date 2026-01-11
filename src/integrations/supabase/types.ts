@@ -166,18 +166,21 @@ export type Database = {
           id: string
           name: string
           slug: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
           slug: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
           slug?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -196,6 +199,7 @@ export type Database = {
           price_per_hour: number
           sport_type: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           closing_time?: string
@@ -211,6 +215,7 @@ export type Database = {
           price_per_hour?: number
           sport_type: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           closing_time?: string
@@ -226,6 +231,7 @@ export type Database = {
           price_per_hour?: number
           sport_type?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -322,6 +328,7 @@ export type Database = {
           price: number
           stock: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           category_id?: string | null
@@ -332,6 +339,7 @@ export type Database = {
           price?: number
           stock?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           category_id?: string | null
@@ -342,6 +350,7 @@ export type Database = {
           price?: number
           stock?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {

@@ -17,7 +17,7 @@ export async function getCategories(): Promise<Category[]> {
   return data || [];
 }
 
-export async function createCategory(name: string): Promise<Category> {
+export async function createCategory(userId: string, name: string): Promise<Category> {
   const slug = name
     .toLowerCase()
     .normalize("NFD")
@@ -27,7 +27,7 @@ export async function createCategory(name: string): Promise<Category> {
 
   const { data, error } = await supabase
     .from("categories")
-    .insert({ name, slug })
+    .insert({ name, slug, user_id: userId })
     .select()
     .single();
 
