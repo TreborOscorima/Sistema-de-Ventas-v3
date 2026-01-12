@@ -58,6 +58,7 @@ export default function POSPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [cashReceived, setCashReceived] = useState<string>("");
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -74,7 +75,10 @@ export default function POSPage() {
   ];
 
   const handleProcessSale = async () => {
-    await processSale(selectedCustomer?.name);
+    const success = await processSale(selectedCustomer?.name);
+    if (success) {
+      setCashReceived("");
+    }
   };
 
   const handleCustomerChange = (customerId: string) => {
@@ -359,6 +363,45 @@ export default function POSPage() {
               </Button>
             ))}
           </div>
+
+          {/* Cash Received Input - Only for cash payments */}
+          {selectedPayment === "cash" && cart.length > 0 && (
+            <div className="mb-4 space-y-2">
+              <Label htmlFor="cash-received" className="text-sm text-muted-foreground">
+                Monto recibido
+              </Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                  S/
+                </span>
+                <Input
+                  id="cash-received"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={cashReceived}
+                  onChange={(e) => setCashReceived(e.target.value)}
+                  className="pl-8 text-right font-semibold"
+                />
+              </div>
+              {cashReceived && parseFloat(cashReceived) >= total && (
+                <div className="flex justify-between items-center p-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <span className="text-sm text-green-600 font-medium">Vuelto:</span>
+                  <span className="text-lg font-bold text-green-600">
+                    S/ {(parseFloat(cashReceived) - total).toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {cashReceived && parseFloat(cashReceived) > 0 && parseFloat(cashReceived) < total && (
+                <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <span className="text-sm text-red-600">
+                    Falta: S/ {(total - parseFloat(cashReceived)).toFixed(2)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Totals */}
           <div className="space-y-2 text-sm">
