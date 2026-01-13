@@ -12,6 +12,19 @@ import {
   mapPaymentMethod
 } from '@/lib/sales';
 import { Customer, getCustomers } from '@/lib/customers';
+import { Reservation, getReservations, updateReservationStatus } from '@/lib/reservations';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface ReservationCartItem {
+  id: string;
+  type: 'reservation';
+  courtName: string;
+  customerName: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  price: number;
+}
 
 export function usePOS() {
   const { user } = useAuth();
@@ -21,7 +34,9 @@ export function usePOS() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [pendingReservations, setPendingReservations] = useState<Reservation[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [reservationCart, setReservationCart] = useState<ReservationCartItem | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isCredit, setIsCredit] = useState(false);
@@ -32,14 +47,18 @@ export function usePOS() {
     if (!user) return;
     try {
       setLoading(true);
-      const [cats, prods, custs] = await Promise.all([
+      const [cats, prods, custs, reservs] = await Promise.all([
         getCategories(),
         getProducts(),
-        getCustomers(user.id)
+        getCustomers(user.id),
+        getReservations()
       ]);
       setCategories(cats);
       setProducts(prods);
       setCustomers(custs);
+      // Filter reservations that are pending or confirmed (not paid yet)
+      const pending = reservs.filter(r => r.status === 'pending' || r.status === 'confirmed');
+      setPendingReservations(pending);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error al cargar datos';
       toast({
@@ -121,9 +140,81 @@ export function usePOS() {
 
   const clearCart = () => {
     setCart([]);
+    setReservationCart(null);
     setSelectedPayment(null);
     setSelectedCustomer(null);
     setIsCredit(false);
+  };
+
+  const addReservationToCart = (reservation: Reservation) => {
+    // Clear product cart when adding a reservation
+    setCart([]);
+    setReservationCart({
+      id: reservation.id,
+      type: 'reservation',
+      courtName: reservation.court?.name || 'Cancha',
+      customerName: reservation.customer_name,
+      date: reservation.reservation_date,
+      startTime: reservation.start_time,
+      endTime: reservation.end_time,
+      price: Number(reservation.total_amount)
+    });
+  };
+
+  const removeReservationFromCart = () => {
+    setReservationCart(null);
+  };
+
+  const processReservationPayment = async () => {
+    if (!user || !reservationCart || !selectedPayment) {
+      return null;
+    }
+
+    if (!activeSession) {
+      toast({
+        title: 'Caja cerrada',
+        description: 'Debes abrir la caja antes de procesar cobros',
+        variant: 'destructive'
+      });
+      return null;
+    }
+
+    try {
+      setProcessing(true);
+
+      // Update reservation status to completed
+      await updateReservationStatus(reservationCart.id, 'completed');
+
+      // Register movement in cashbox
+      const paymentMethodForCashbox = mapPaymentMethod(selectedPayment);
+      await addMovement(
+        'sale',
+        reservationCart.price,
+        `Reserva: ${reservationCart.courtName} - ${reservationCart.customerName}`,
+        paymentMethodForCashbox
+      );
+
+      toast({
+        title: 'Reserva cobrada',
+        description: `Total: S/ ${reservationCart.price.toFixed(2)}`
+      });
+
+      clearCart();
+      await loadData();
+      await refreshCashbox();
+
+      return { id: reservationCart.id, total: reservationCart.price };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al procesar cobro';
+      toast({
+        title: 'Error',
+        description: message,
+        variant: 'destructive'
+      });
+      return null;
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const processSale = async (customerName?: string) => {
@@ -199,15 +290,25 @@ export function usePOS() {
     }
   };
 
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const tax = subtotal * 0.18;
-  const total = subtotal + tax;
+  const productSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const productTax = productSubtotal * 0.18;
+  const productTotal = productSubtotal + productTax;
+
+  // Reservation totals (no tax applied as it's already included)
+  const reservationTotal = reservationCart ? reservationCart.price : 0;
+
+  // Combined totals
+  const subtotal = reservationCart ? reservationTotal : productSubtotal;
+  const tax = reservationCart ? 0 : productTax;
+  const total = reservationCart ? reservationTotal : productTotal;
 
   return {
     categories,
     products,
     customers,
+    pendingReservations,
     cart,
+    reservationCart,
     selectedPayment,
     selectedCustomer,
     isCredit,
@@ -225,6 +326,9 @@ export function usePOS() {
     removeFromCart,
     clearCart,
     processSale,
+    addReservationToCart,
+    removeReservationFromCart,
+    processReservationPayment,
     refresh: loadData
   };
 }
