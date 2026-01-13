@@ -12,6 +12,9 @@ import {
   AlertCircle,
   UserCheck,
   Receipt,
+  Calendar,
+  Clock,
+  MapPin,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,17 +30,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { usePOS } from "@/hooks/use-pos";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 
 export default function POSPage() {
   const {
     categories,
     products,
     customers,
+    pendingReservations,
     cart,
+    reservationCart,
     selectedPayment,
     selectedCustomer,
     isCredit,
@@ -54,11 +62,15 @@ export default function POSPage() {
     updateQuantity,
     removeFromCart,
     processSale,
+    addReservationToCart,
+    removeReservationFromCart,
+    processReservationPayment,
   } = usePOS();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [cashReceived, setCashReceived] = useState<string>("");
+  const [activeTab, setActiveTab] = useState("products");
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -75,7 +87,12 @@ export default function POSPage() {
   ];
 
   const handleProcessSale = async () => {
-    const success = await processSale(selectedCustomer?.name);
+    let success;
+    if (reservationCart) {
+      success = await processReservationPayment();
+    } else {
+      success = await processSale(selectedCustomer?.name);
+    }
     if (success) {
       setCashReceived("");
     }
@@ -105,6 +122,14 @@ export default function POSPage() {
     }).format(value);
   };
 
+  const formatDate = (dateString: string) => {
+    return format(parseISO(dateString), "EEE d 'de' MMM", { locale: es });
+  };
+
+  const formatTime = (time: string) => {
+    return time.slice(0, 5); // "HH:mm"
+  };
+
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
@@ -115,7 +140,7 @@ export default function POSPage() {
 
   return (
     <div className="flex h-[calc(100vh-8rem)] gap-6">
-      {/* Products Section */}
+      {/* Products/Reservations Section */}
       <div className="flex flex-1 flex-col rounded-xl border border-border bg-card shadow-sm">
         {/* Cashbox Alert */}
         {!activeSession && (
@@ -131,89 +156,175 @@ export default function POSPage() {
           </Alert>
         )}
 
-        {/* Search & Categories */}
-        <div className="border-b border-border p-4">
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar productos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 input-focus"
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant={selectedCategory === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedCategory("all")}
-              className={cn(
-                "transition-all",
-                selectedCategory === "all" && "btn-gradient"
-              )}
-            >
-              Todos
-            </Button>
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.slug ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category.slug)}
-                className={cn(
-                  "transition-all",
-                  selectedCategory === category.slug && "btn-gradient"
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1">
+          <div className="border-b border-border p-4 pb-0">
+            <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+              <TabsTrigger value="products" className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4" />
+                Productos
+              </TabsTrigger>
+              <TabsTrigger value="reservations" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Reservas
+                {pendingReservations.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 justify-center">
+                    {pendingReservations.length}
+                  </Badge>
                 )}
-              >
-                {category.name}
-              </Button>
-            ))}
+              </TabsTrigger>
+            </TabsList>
           </div>
-        </div>
 
-        {/* Products Grid */}
-        <ScrollArea className="flex-1 p-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {filteredProducts.map((product, index) => (
-              <button
-                key={product.id}
-                onClick={() => addToCart(product)}
-                disabled={product.stock <= 0}
-                className={cn(
-                  "group flex flex-col rounded-xl border border-border bg-background p-4 text-left transition-all duration-200 animate-scale-in",
-                  product.stock > 0 
-                    ? "hover:border-primary hover:shadow-md" 
-                    : "opacity-50 cursor-not-allowed"
-                )}
-                style={{ animationDelay: `${index * 0.02}s` }}
-              >
-                <div className="mb-2 flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
-                    <ShoppingBag className="h-5 w-5 text-primary" />
-                  </div>
-                  <Badge
-                    variant="outline"
+          {/* Products Tab */}
+          <TabsContent value="products" className="flex-1 flex flex-col m-0">
+            {/* Search & Categories */}
+            <div className="border-b border-border p-4">
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Buscar productos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 input-focus"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={selectedCategory === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory("all")}
+                  className={cn(
+                    "transition-all",
+                    selectedCategory === "all" && "btn-gradient"
+                  )}
+                >
+                  Todos
+                </Button>
+                {categories.map((category) => (
+                  <Button
+                    key={category.id}
+                    variant={selectedCategory === category.slug ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category.slug)}
                     className={cn(
-                      "text-xs",
-                      product.stock < 10
-                        ? "border-warning text-warning"
-                        : "border-success text-success"
+                      "transition-all",
+                      selectedCategory === category.slug && "btn-gradient"
                     )}
                   >
-                    {product.stock}
-                  </Badge>
+                    {category.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Products Grid */}
+            <ScrollArea className="flex-1 p-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {filteredProducts.map((product, index) => (
+                  <button
+                    key={product.id}
+                    onClick={() => addToCart(product)}
+                    disabled={product.stock <= 0 || !!reservationCart}
+                    className={cn(
+                      "group flex flex-col rounded-xl border border-border bg-background p-4 text-left transition-all duration-200 animate-scale-in",
+                      product.stock > 0 && !reservationCart
+                        ? "hover:border-primary hover:shadow-md" 
+                        : "opacity-50 cursor-not-allowed"
+                    )}
+                    style={{ animationDelay: `${index * 0.02}s` }}
+                  >
+                    <div className="mb-2 flex items-start justify-between">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
+                        <ShoppingBag className="h-5 w-5 text-primary" />
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs",
+                          product.stock < 10
+                            ? "border-warning text-warning"
+                            : "border-success text-success"
+                        )}
+                      >
+                        {product.stock}
+                      </Badge>
+                    </div>
+                    <h4 className="mb-1 line-clamp-2 text-sm font-medium leading-tight">
+                      {product.name}
+                    </h4>
+                    <p className="mt-auto text-lg font-bold text-primary">
+                      S/ {Number(product.price).toFixed(2)}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+
+          {/* Reservations Tab */}
+          <TabsContent value="reservations" className="flex-1 flex flex-col m-0">
+            <ScrollArea className="flex-1 p-4">
+              {pendingReservations.length === 0 ? (
+                <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground py-12">
+                  <Calendar className="mb-3 h-12 w-12 opacity-50" />
+                  <p>No hay reservas pendientes de cobro</p>
+                  <p className="text-sm">Las reservas confirmadas aparecerán aquí</p>
                 </div>
-                <h4 className="mb-1 line-clamp-2 text-sm font-medium leading-tight">
-                  {product.name}
-                </h4>
-                <p className="mt-auto text-lg font-bold text-primary">
-                  S/ {Number(product.price).toFixed(2)}
-                </p>
-              </button>
-            ))}
-          </div>
-        </ScrollArea>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {pendingReservations.map((reservation, index) => (
+                    <button
+                      key={reservation.id}
+                      onClick={() => addReservationToCart(reservation)}
+                      disabled={!!cart.length}
+                      className={cn(
+                        "group flex flex-col rounded-xl border border-border bg-background p-4 text-left transition-all duration-200 animate-scale-in",
+                        !cart.length
+                          ? "hover:border-primary hover:shadow-md"
+                          : "opacity-50 cursor-not-allowed"
+                      )}
+                      style={{ animationDelay: `${index * 0.02}s` }}
+                    >
+                      <div className="mb-3 flex items-start justify-between">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
+                          <MapPin className="h-5 w-5 text-primary" />
+                        </div>
+                        <Badge
+                          variant={reservation.status === 'confirmed' ? 'default' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {reservation.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
+                        </Badge>
+                      </div>
+                      
+                      <h4 className="mb-1 font-semibold text-foreground">
+                        {reservation.court?.name || 'Cancha'}
+                      </h4>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {reservation.customer_name}
+                      </p>
+                      
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                        <Calendar className="h-3 w-3" />
+                        <span>{formatDate(reservation.reservation_date)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                        <Clock className="h-3 w-3" />
+                        <span>{formatTime(reservation.start_time)} - {formatTime(reservation.end_time)}</span>
+                      </div>
+                      
+                      <p className="mt-auto text-lg font-bold text-primary">
+                        S/ {Number(reservation.total_amount).toFixed(2)}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Cart Section */}
@@ -221,79 +332,114 @@ export default function POSPage() {
         {/* Cart Header */}
         <div className="border-b border-border p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Carrito de Venta</h2>
-            <Badge variant="secondary">{cart.length} items</Badge>
+            <h2 className="text-lg font-semibold">
+              {reservationCart ? "Cobro de Reserva" : "Carrito de Venta"}
+            </h2>
+            <Badge variant="secondary">
+              {reservationCart ? "1 reserva" : `${cart.length} items`}
+            </Badge>
           </div>
           
-          {/* Customer Selector */}
-          <div className="mt-3 space-y-3">
-            <div className="flex items-center gap-2">
-              <UserCheck className="h-4 w-4 text-muted-foreground" />
-              <Select
-                value={selectedCustomer?.id || "none"}
-                onValueChange={handleCustomerChange}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Seleccionar cliente (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sin cliente</SelectItem>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{customer.name}</span>
-                        {customer.balance !== 0 && (
-                          <span className={cn(
-                            "text-xs ml-2",
-                            customer.balance > 0 ? "text-green-600" : "text-red-600"
-                          )}>
-                            ({formatCurrency(customer.balance)})
-                          </span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Customer Selector - Only show for product sales */}
+          {!reservationCart && (
+            <div className="mt-3 space-y-3">
+              <div className="flex items-center gap-2">
+                <UserCheck className="h-4 w-4 text-muted-foreground" />
+                <Select
+                  value={selectedCustomer?.id || "none"}
+                  onValueChange={handleCustomerChange}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Seleccionar cliente (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin cliente</SelectItem>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{customer.name}</span>
+                          {customer.balance !== 0 && (
+                            <span className={cn(
+                              "text-xs ml-2",
+                              customer.balance > 0 ? "text-green-600" : "text-red-600"
+                            )}>
+                              ({formatCurrency(customer.balance)})
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Credit Sale Toggle */}
-            {selectedCustomer && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div className="flex items-center gap-2">
-                  <Receipt className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="credit-toggle" className="text-sm cursor-pointer">
-                    Venta a crédito
-                  </Label>
+              {/* Credit Sale Toggle */}
+              {selectedCustomer && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="credit-toggle" className="text-sm cursor-pointer">
+                      Venta a crédito
+                    </Label>
+                  </div>
+                  <Switch
+                    id="credit-toggle"
+                    checked={isCredit}
+                    onCheckedChange={handleCreditToggle}
+                  />
                 </div>
-                <Switch
-                  id="credit-toggle"
-                  checked={isCredit}
-                  onCheckedChange={handleCreditToggle}
-                />
-              </div>
-            )}
+              )}
 
-            {isCredit && selectedCustomer && (
-              <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <p className="text-xs text-amber-600">
-                  Se cargará S/ {total.toFixed(2)} a la cuenta de {selectedCustomer.name}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Saldo actual: {formatCurrency(selectedCustomer.balance)}
-                </p>
-              </div>
-            )}
-          </div>
+              {isCredit && selectedCustomer && (
+                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-xs text-amber-600">
+                    Se cargará S/ {total.toFixed(2)} a la cuenta de {selectedCustomer.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Saldo actual: {formatCurrency(selectedCustomer.balance)}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Cart Items */}
         <ScrollArea className="flex-1 p-4">
-          {cart.length === 0 ? (
+          {/* Reservation in cart */}
+          {reservationCart ? (
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Calendar className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold">{reservationCart.courtName}</p>
+                  <p className="text-sm text-muted-foreground">{reservationCart.customerName}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                    <span>{formatDate(reservationCart.date)}</span>
+                    <span>•</span>
+                    <span>{formatTime(reservationCart.startTime)} - {formatTime(reservationCart.endTime)}</span>
+                  </div>
+                  <p className="text-lg font-bold text-primary mt-2">
+                    S/ {reservationCart.price.toFixed(2)}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                  onClick={removeReservationFromCart}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ) : cart.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground">
               <ShoppingBag className="mb-3 h-12 w-12 opacity-50" />
               <p>El carrito está vacío</p>
-              <p className="text-sm">Agrega productos para comenzar</p>
+              <p className="text-sm">Agrega productos o reservas para comenzar</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -365,7 +511,7 @@ export default function POSPage() {
           </div>
 
           {/* Cash Received Input - Only for cash payments */}
-          {selectedPayment === "cash" && cart.length > 0 && (
+          {selectedPayment === "cash" && (cart.length > 0 || reservationCart) && (
             <div className="mb-4 space-y-2">
               <Label htmlFor="cash-received" className="text-sm text-muted-foreground">
                 Monto recibido
@@ -405,15 +551,19 @@ export default function POSPage() {
 
           {/* Totals */}
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>S/ {subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">IGV (18%)</span>
-              <span>S/ {tax.toFixed(2)}</span>
-            </div>
-            <Separator />
+            {!reservationCart && (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span>S/ {subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">IGV (18%)</span>
+                  <span>S/ {tax.toFixed(2)}</span>
+                </div>
+                <Separator />
+              </>
+            )}
             <div className="flex justify-between text-lg font-bold">
               <span>Total</span>
               <span className="text-primary">S/ {total.toFixed(2)}</span>
@@ -426,7 +576,13 @@ export default function POSPage() {
               isCredit ? "bg-amber-600 hover:bg-amber-700" : "btn-gradient"
             )}
             size="lg"
-            disabled={cart.length === 0 || !selectedPayment || !activeSession || processing || (isCredit && !selectedCustomer)}
+            disabled={
+              (!cart.length && !reservationCart) || 
+              !selectedPayment || 
+              !activeSession || 
+              processing || 
+              (isCredit && !selectedCustomer)
+            }
             onClick={handleProcessSale}
           >
             {processing ? (
@@ -434,6 +590,8 @@ export default function POSPage() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Procesando...
               </>
+            ) : reservationCart ? (
+              "Cobrar Reserva"
             ) : isCredit ? (
               "Registrar Crédito"
             ) : (
