@@ -36,7 +36,7 @@ export function usePOS() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [pendingReservations, setPendingReservations] = useState<Reservation[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [reservationCart, setReservationCart] = useState<ReservationCartItem | null>(null);
+  const [reservationCart, setReservationCart] = useState<ReservationCartItem[]>([]);
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isCredit, setIsCredit] = useState(false);
@@ -140,16 +140,24 @@ export function usePOS() {
 
   const clearCart = () => {
     setCart([]);
-    setReservationCart(null);
+    setReservationCart([]);
     setSelectedPayment(null);
     setSelectedCustomer(null);
     setIsCredit(false);
   };
 
   const addReservationToCart = (reservation: Reservation) => {
-    // Clear product cart when adding a reservation
-    setCart([]);
-    setReservationCart({
+    // Check if already in cart
+    if (reservationCart.some(r => r.id === reservation.id)) {
+      toast({
+        title: 'Ya agregada',
+        description: 'Esta reserva ya está en el carrito',
+        variant: 'default'
+      });
+      return;
+    }
+
+    setReservationCart(prev => [...prev, {
       id: reservation.id,
       type: 'reservation',
       courtName: reservation.court?.name || 'Cancha',
@@ -158,67 +166,15 @@ export function usePOS() {
       startTime: reservation.start_time,
       endTime: reservation.end_time,
       price: Number(reservation.total_amount)
-    });
+    }]);
   };
 
-  const removeReservationFromCart = () => {
-    setReservationCart(null);
+  const removeReservationFromCart = (reservationId: string) => {
+    setReservationCart(prev => prev.filter(r => r.id !== reservationId));
   };
 
-  const processReservationPayment = async () => {
-    if (!user || !reservationCart || !selectedPayment) {
-      return null;
-    }
-
-    if (!activeSession) {
-      toast({
-        title: 'Caja cerrada',
-        description: 'Debes abrir la caja antes de procesar cobros',
-        variant: 'destructive'
-      });
-      return null;
-    }
-
-    try {
-      setProcessing(true);
-
-      // Update reservation status to completed
-      await updateReservationStatus(reservationCart.id, 'completed');
-
-      // Register movement in cashbox
-      const paymentMethodForCashbox = mapPaymentMethod(selectedPayment);
-      await addMovement(
-        'sale',
-        reservationCart.price,
-        `Reserva: ${reservationCart.courtName} - ${reservationCart.customerName}`,
-        paymentMethodForCashbox
-      );
-
-      toast({
-        title: 'Reserva cobrada',
-        description: `Total: S/ ${reservationCart.price.toFixed(2)}`
-      });
-
-      clearCart();
-      await loadData();
-      await refreshCashbox();
-
-      return { id: reservationCart.id, total: reservationCart.price };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error al procesar cobro';
-      toast({
-        title: 'Error',
-        description: message,
-        variant: 'destructive'
-      });
-      return null;
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const processSale = async (customerName?: string) => {
-    if (!user || cart.length === 0 || !selectedPayment) {
+  const processCombinedSale = async (customerName?: string) => {
+    if (!user || (cart.length === 0 && reservationCart.length === 0) || !selectedPayment) {
       return null;
     }
 
@@ -244,39 +200,63 @@ export function usePOS() {
     try {
       setProcessing(true);
       
-      const sale = await createSale(
-        user.id,
-        activeSession.id,
-        cart,
-        selectedPayment,
-        selectedCustomer?.name || customerName,
-        selectedCustomer?.id,
-        isCredit
-      );
-
-      // Register movement in cashbox (only if not credit)
-      if (!isCredit) {
-        const paymentMethodForCashbox = mapPaymentMethod(selectedPayment);
-        await addMovement(
-          'sale',
-          sale.total,
-          `Venta #${sale.id.slice(0, 8)}`,
-          paymentMethodForCashbox
+      let saleResult = null;
+      const paymentMethodForCashbox = mapPaymentMethod(selectedPayment);
+      
+      // Process product sale if there are products
+      if (cart.length > 0) {
+        const sale = await createSale(
+          user.id,
+          activeSession.id,
+          cart,
+          selectedPayment,
+          selectedCustomer?.name || customerName,
+          selectedCustomer?.id,
+          isCredit
         );
+
+        // Register movement in cashbox (only if not credit)
+        if (!isCredit) {
+          await addMovement(
+            'sale',
+            sale.total,
+            `Venta #${sale.id.slice(0, 8)}`,
+            paymentMethodForCashbox
+          );
+        }
+        
+        saleResult = sale;
       }
 
+      // Process reservations if there are any
+      if (reservationCart.length > 0) {
+        for (const reservation of reservationCart) {
+          await updateReservationStatus(reservation.id, 'completed');
+          
+          await addMovement(
+            'sale',
+            reservation.price,
+            `Reserva: ${reservation.courtName} - ${reservation.customerName}`,
+            paymentMethodForCashbox
+          );
+        }
+      }
+
+      const totalAmount = total;
+      const itemCount = cart.length + reservationCart.length;
+      
       toast({
-        title: isCredit ? 'Venta a crédito registrada' : 'Venta procesada',
-        description: isCredit 
-          ? `Crédito de S/ ${sale.total.toFixed(2)} para ${selectedCustomer?.name}`
-          : `Total: S/ ${sale.total.toFixed(2)}`
+        title: isCredit && cart.length > 0 ? 'Venta combinada a crédito' : 'Venta procesada',
+        description: isCredit && cart.length > 0
+          ? `Crédito de S/ ${productTotal.toFixed(2)} para ${selectedCustomer?.name}. Reservas: S/ ${reservationsTotal.toFixed(2)}`
+          : `Total: S/ ${totalAmount.toFixed(2)} (${itemCount} items)`
       });
 
       clearCart();
-      await loadData(); // Refresh products and customers
+      await loadData();
       await refreshCashbox();
       
-      return sale;
+      return saleResult || { total: totalAmount };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error al procesar venta';
       toast({
@@ -295,12 +275,12 @@ export function usePOS() {
   const productTotal = productSubtotal + productTax;
 
   // Reservation totals (no tax applied as it's already included)
-  const reservationTotal = reservationCart ? reservationCart.price : 0;
+  const reservationsTotal = reservationCart.reduce((sum, r) => sum + r.price, 0);
 
   // Combined totals
-  const subtotal = reservationCart ? reservationTotal : productSubtotal;
-  const tax = reservationCart ? 0 : productTax;
-  const total = reservationCart ? reservationTotal : productTotal;
+  const subtotal = productSubtotal + reservationsTotal;
+  const tax = productTax;
+  const total = productTotal + reservationsTotal;
 
   return {
     categories,
@@ -318,6 +298,8 @@ export function usePOS() {
     subtotal,
     tax,
     total,
+    productTotal,
+    reservationsTotal,
     setSelectedPayment,
     setSelectedCustomer,
     setIsCredit,
@@ -325,10 +307,9 @@ export function usePOS() {
     updateQuantity,
     removeFromCart,
     clearCart,
-    processSale,
+    processSale: processCombinedSale,
     addReservationToCart,
     removeReservationFromCart,
-    processReservationPayment,
     refresh: loadData
   };
 }
