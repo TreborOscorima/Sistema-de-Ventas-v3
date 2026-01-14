@@ -55,6 +55,8 @@ export default function POSPage() {
     subtotal,
     tax,
     total,
+    productTotal,
+    reservationsTotal,
     setSelectedPayment,
     setSelectedCustomer,
     setIsCredit,
@@ -64,7 +66,6 @@ export default function POSPage() {
     processSale,
     addReservationToCart,
     removeReservationFromCart,
-    processReservationPayment,
   } = usePOS();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -87,16 +88,16 @@ export default function POSPage() {
   ];
 
   const handleProcessSale = async () => {
-    let success;
-    if (reservationCart) {
-      success = await processReservationPayment();
-    } else {
-      success = await processSale(selectedCustomer?.name);
-    }
+    const success = await processSale(selectedCustomer?.name);
     if (success) {
       setCashReceived("");
     }
   };
+
+  const hasProducts = cart.length > 0;
+  const hasReservations = reservationCart.length > 0;
+  const hasItems = hasProducts || hasReservations;
+  const isCombinedSale = hasProducts && hasReservations;
 
   const handleCustomerChange = (customerId: string) => {
     if (customerId === "none") {
@@ -222,19 +223,21 @@ export default function POSPage() {
             {/* Products Grid */}
             <ScrollArea className="flex-1 p-4">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                {filteredProducts.map((product, index) => (
-                  <button
-                    key={product.id}
-                    onClick={() => addToCart(product)}
-                    disabled={product.stock <= 0 || !!reservationCart}
-                    className={cn(
-                      "group flex flex-col rounded-xl border border-border bg-background p-4 text-left transition-all duration-200 animate-scale-in",
-                      product.stock > 0 && !reservationCart
-                        ? "hover:border-primary hover:shadow-md" 
-                        : "opacity-50 cursor-not-allowed"
-                    )}
-                    style={{ animationDelay: `${index * 0.02}s` }}
-                  >
+                {filteredProducts.map((product, index) => {
+                  const isInCart = reservationCart.some(r => r.id === product.id);
+                  return (
+                    <button
+                      key={product.id}
+                      onClick={() => addToCart(product)}
+                      disabled={product.stock <= 0}
+                      className={cn(
+                        "group flex flex-col rounded-xl border border-border bg-background p-4 text-left transition-all duration-200 animate-scale-in",
+                        product.stock > 0
+                          ? "hover:border-primary hover:shadow-md" 
+                          : "opacity-50 cursor-not-allowed"
+                      )}
+                      style={{ animationDelay: `${index * 0.02}s` }}
+                    >
                     <div className="mb-2 flex items-start justify-between">
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
                         <ShoppingBag className="h-5 w-5 text-primary" />
@@ -258,7 +261,8 @@ export default function POSPage() {
                       S/ {Number(product.price).toFixed(2)}
                     </p>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
           </TabsContent>
@@ -274,19 +278,22 @@ export default function POSPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {pendingReservations.map((reservation, index) => (
-                    <button
-                      key={reservation.id}
-                      onClick={() => addReservationToCart(reservation)}
-                      disabled={!!cart.length}
-                      className={cn(
-                        "group flex flex-col rounded-xl border border-border bg-background p-4 text-left transition-all duration-200 animate-scale-in",
-                        !cart.length
-                          ? "hover:border-primary hover:shadow-md"
-                          : "opacity-50 cursor-not-allowed"
-                      )}
-                      style={{ animationDelay: `${index * 0.02}s` }}
-                    >
+                {pendingReservations.map((reservation, index) => {
+                    const isInCart = reservationCart.some(r => r.id === reservation.id);
+                    return (
+                      <button
+                        key={reservation.id}
+                        onClick={() => addReservationToCart(reservation)}
+                        disabled={isInCart}
+                        className={cn(
+                          "group flex flex-col rounded-xl border border-border bg-background p-4 text-left transition-all duration-200 animate-scale-in",
+                          !isInCart
+                            ? "hover:border-primary hover:shadow-md"
+                            : "opacity-50 cursor-not-allowed",
+                          isInCart && "border-primary bg-primary/5"
+                        )}
+                        style={{ animationDelay: `${index * 0.02}s` }}
+                      >
                       <div className="mb-3 flex items-start justify-between">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
                           <MapPin className="h-5 w-5 text-primary" />
@@ -319,7 +326,8 @@ export default function POSPage() {
                         S/ {Number(reservation.total_amount).toFixed(2)}
                       </p>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </ScrollArea>
@@ -333,109 +341,78 @@ export default function POSPage() {
         <div className="border-b border-border p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
-              {reservationCart ? "Cobro de Reserva" : "Carrito de Venta"}
+              {isCombinedSale ? "Venta Combinada" : hasReservations ? "Cobro de Reservas" : "Carrito de Venta"}
             </h2>
             <Badge variant="secondary">
-              {reservationCart ? "1 reserva" : `${cart.length} items`}
+              {cart.length + reservationCart.length} items
             </Badge>
           </div>
           
-          {/* Customer Selector - Only show for product sales */}
-          {!reservationCart && (
-            <div className="mt-3 space-y-3">
-              <div className="flex items-center gap-2">
-                <UserCheck className="h-4 w-4 text-muted-foreground" />
-                <Select
-                  value={selectedCustomer?.id || "none"}
-                  onValueChange={handleCustomerChange}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Seleccionar cliente (opcional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sin cliente</SelectItem>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        <div className="flex items-center justify-between w-full">
-                          <span>{customer.name}</span>
-                          {customer.balance !== 0 && (
-                            <span className={cn(
-                              "text-xs ml-2",
-                              customer.balance > 0 ? "text-green-600" : "text-red-600"
-                            )}>
-                              ({formatCurrency(customer.balance)})
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Credit Sale Toggle */}
-              {selectedCustomer && (
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-center gap-2">
-                    <Receipt className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="credit-toggle" className="text-sm cursor-pointer">
-                      Venta a crédito
-                    </Label>
-                  </div>
-                  <Switch
-                    id="credit-toggle"
-                    checked={isCredit}
-                    onCheckedChange={handleCreditToggle}
-                  />
-                </div>
-              )}
-
-              {isCredit && selectedCustomer && (
-                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <p className="text-xs text-amber-600">
-                    Se cargará S/ {total.toFixed(2)} a la cuenta de {selectedCustomer.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Saldo actual: {formatCurrency(selectedCustomer.balance)}
-                  </p>
-                </div>
-              )}
+          {/* Customer Selector */}
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+              <Select
+                value={selectedCustomer?.id || "none"}
+                onValueChange={handleCustomerChange}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Seleccionar cliente (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin cliente</SelectItem>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer.id} value={customer.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{customer.name}</span>
+                        {customer.balance !== 0 && (
+                          <span className={cn(
+                            "text-xs ml-2",
+                            customer.balance > 0 ? "text-green-600" : "text-red-600"
+                          )}>
+                            ({formatCurrency(customer.balance)})
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
+
+            {/* Credit Sale Toggle - Only for product sales */}
+            {hasProducts && selectedCustomer && (
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="credit-toggle" className="text-sm cursor-pointer">
+                    Venta a crédito (solo productos)
+                  </Label>
+                </div>
+                <Switch
+                  id="credit-toggle"
+                  checked={isCredit}
+                  onCheckedChange={handleCreditToggle}
+                />
+              </div>
+            )}
+
+            {isCredit && selectedCustomer && hasProducts && (
+              <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <p className="text-xs text-amber-600">
+                  Se cargará S/ {productTotal.toFixed(2)} a la cuenta de {selectedCustomer.name}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Saldo actual: {formatCurrency(selectedCustomer.balance)}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Cart Items */}
         <ScrollArea className="flex-1 p-4">
-          {/* Reservation in cart */}
-          {reservationCart ? (
-            <div className="space-y-3">
-              <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Calendar className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold">{reservationCart.courtName}</p>
-                  <p className="text-sm text-muted-foreground">{reservationCart.customerName}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                    <span>{formatDate(reservationCart.date)}</span>
-                    <span>•</span>
-                    <span>{formatTime(reservationCart.startTime)} - {formatTime(reservationCart.endTime)}</span>
-                  </div>
-                  <p className="text-lg font-bold text-primary mt-2">
-                    S/ {reservationCart.price.toFixed(2)}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                  onClick={removeReservationFromCart}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ) : cart.length === 0 ? (
+          {!hasItems ? (
             <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground">
               <ShoppingBag className="mb-3 h-12 w-12 opacity-50" />
               <p>El carrito está vacío</p>
@@ -443,48 +420,101 @@ export default function POSPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {cart.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 rounded-lg border border-border p-3"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium leading-tight">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      S/ {item.price.toFixed(2)} c/u
+              {/* Reservations in cart */}
+              {reservationCart.length > 0 && (
+                <>
+                  {hasProducts && (
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Reservas
                     </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => updateQuantity(item.id, -1)}
+                  )}
+                  {reservationCart.map((reservation) => (
+                    <div
+                      key={reservation.id}
+                      className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3"
                     >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                    <span className="w-8 text-center font-semibold">
-                      {item.quantity}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => updateQuantity(item.id, 1)}
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                        <Calendar className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{reservation.courtName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{reservation.customerName}</p>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                          <span>{formatDate(reservation.date)}</span>
+                          <span>•</span>
+                          <span>{formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-primary">
+                          S/ {reservation.price.toFixed(2)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                          onClick={() => removeReservationFromCart(reservation.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* Products in cart */}
+              {cart.length > 0 && (
+                <>
+                  {hasReservations && (
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-4">
+                      Productos
+                    </p>
+                  )}
+                  {cart.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 rounded-lg border border-border p-3"
                     >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                      onClick={() => removeFromCart(item.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                      <div className="flex-1">
+                        <p className="font-medium leading-tight">{item.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          S/ {item.price.toFixed(2)} c/u
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => updateQuantity(item.id, -1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center font-semibold">
+                          {item.quantity}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => updateQuantity(item.id, 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          onClick={() => removeFromCart(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           )}
         </ScrollArea>
@@ -511,7 +541,7 @@ export default function POSPage() {
           </div>
 
           {/* Cash Received Input - Only for cash payments */}
-          {selectedPayment === "cash" && (cart.length > 0 || reservationCart) && (
+          {selectedPayment === "cash" && hasItems && (
             <div className="mb-4 space-y-2">
               <Label htmlFor="cash-received" className="text-sm text-muted-foreground">
                 Monto recibido
@@ -551,7 +581,22 @@ export default function POSPage() {
 
           {/* Totals */}
           <div className="space-y-2 text-sm">
-            {!reservationCart && (
+            {/* Show breakdown for combined sales */}
+            {isCombinedSale && (
+              <>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Reservas</span>
+                  <span>S/ {reservationsTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Productos (inc. IGV)</span>
+                  <span>S/ {productTotal.toFixed(2)}</span>
+                </div>
+                <Separator />
+              </>
+            )}
+            {/* Show product breakdown only */}
+            {hasProducts && !isCombinedSale && (
               <>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
@@ -573,11 +618,11 @@ export default function POSPage() {
           <Button
             className={cn(
               "mt-4 w-full",
-              isCredit ? "bg-amber-600 hover:bg-amber-700" : "btn-gradient"
+              isCredit && hasProducts ? "bg-amber-600 hover:bg-amber-700" : "btn-gradient"
             )}
             size="lg"
             disabled={
-              (!cart.length && !reservationCart) || 
+              !hasItems || 
               !selectedPayment || 
               !activeSession || 
               processing || 
@@ -590,8 +635,10 @@ export default function POSPage() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Procesando...
               </>
-            ) : reservationCart ? (
-              "Cobrar Reserva"
+            ) : isCombinedSale ? (
+              "Procesar Venta Combinada"
+            ) : hasReservations ? (
+              `Cobrar Reserva${reservationCart.length > 1 ? 's' : ''}`
             ) : isCredit ? (
               "Registrar Crédito"
             ) : (
