@@ -69,6 +69,7 @@ export default function POSPage() {
   } = usePOS();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [reservationSearchTerm, setReservationSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [cashReceived, setCashReceived] = useState<string>("");
   const [activeTab, setActiveTab] = useState("products");
@@ -269,6 +270,20 @@ export default function POSPage() {
 
           {/* Reservations Tab */}
           <TabsContent value="reservations" className="flex-1 flex flex-col m-0">
+            {/* Search for reservations */}
+            <div className="border-b border-border p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Buscar por cliente o cancha..."
+                  value={reservationSearchTerm}
+                  onChange={(e) => setReservationSearchTerm(e.target.value)}
+                  className="pl-10 input-focus"
+                />
+              </div>
+            </div>
+
             <ScrollArea className="flex-1 p-4">
               {pendingReservations.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground py-12">
@@ -278,7 +293,15 @@ export default function POSPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {pendingReservations.map((reservation, index) => {
+                {pendingReservations
+                  .filter((reservation) => {
+                    if (!reservationSearchTerm) return true;
+                    const searchLower = reservationSearchTerm.toLowerCase();
+                    const matchesCustomer = reservation.customer_name.toLowerCase().includes(searchLower);
+                    const matchesCourt = reservation.court?.name?.toLowerCase().includes(searchLower);
+                    return matchesCustomer || matchesCourt;
+                  })
+                  .map((reservation, index) => {
                     const isInCart = reservationCart.some(r => r.id === reservation.id);
                     return (
                       <button
