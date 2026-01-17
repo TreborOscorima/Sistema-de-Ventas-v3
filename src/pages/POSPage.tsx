@@ -70,6 +70,7 @@ export default function POSPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [reservationSearchTerm, setReservationSearchTerm] = useState("");
+  const [reservationDateFilter, setReservationDateFilter] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [cashReceived, setCashReceived] = useState<string>("");
   const [activeTab, setActiveTab] = useState("products");
@@ -270,17 +271,39 @@ export default function POSPage() {
 
           {/* Reservations Tab */}
           <TabsContent value="reservations" className="flex-1 flex flex-col m-0">
-            {/* Search for reservations */}
+            {/* Search and Date Filter for reservations */}
             <div className="border-b border-border p-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Buscar por cliente o cancha..."
-                  value={reservationSearchTerm}
-                  onChange={(e) => setReservationSearchTerm(e.target.value)}
-                  className="pl-10 input-focus"
-                />
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Buscar por cliente o cancha..."
+                    value={reservationSearchTerm}
+                    onChange={(e) => setReservationSearchTerm(e.target.value)}
+                    className="pl-10 input-focus"
+                  />
+                </div>
+                <div className="relative w-[160px]">
+                  <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  <Input
+                    type="date"
+                    value={reservationDateFilter}
+                    onChange={(e) => setReservationDateFilter(e.target.value)}
+                    className="pl-10 input-focus"
+                  />
+                </div>
+                {reservationDateFilter && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setReservationDateFilter("")}
+                    className="shrink-0"
+                    title="Limpiar filtro de fecha"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -295,11 +318,18 @@ export default function POSPage() {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {pendingReservations
                   .filter((reservation) => {
-                    if (!reservationSearchTerm) return true;
-                    const searchLower = reservationSearchTerm.toLowerCase();
-                    const matchesCustomer = reservation.customer_name.toLowerCase().includes(searchLower);
-                    const matchesCourt = reservation.court?.name?.toLowerCase().includes(searchLower);
-                    return matchesCustomer || matchesCourt;
+                    // Text search filter
+                    if (reservationSearchTerm) {
+                      const searchLower = reservationSearchTerm.toLowerCase();
+                      const matchesCustomer = reservation.customer_name.toLowerCase().includes(searchLower);
+                      const matchesCourt = reservation.court?.name?.toLowerCase().includes(searchLower);
+                      if (!matchesCustomer && !matchesCourt) return false;
+                    }
+                    // Date filter
+                    if (reservationDateFilter) {
+                      if (reservation.reservation_date !== reservationDateFilter) return false;
+                    }
+                    return true;
                   })
                   .map((reservation, index) => {
                     const isInCart = reservationCart.some(r => r.id === reservation.id);
