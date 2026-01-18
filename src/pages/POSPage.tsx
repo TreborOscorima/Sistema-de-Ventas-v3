@@ -32,11 +32,28 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { usePOS } from "@/hooks/use-pos";
+import { usePOS, ReservationCartItem } from "@/hooks/use-pos";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { CombinedReceiptModal } from "@/components/sales/CombinedReceiptModal";
+import { CartItem } from "@/lib/sales";
+
+interface ReceiptSaleData {
+  id: string;
+  createdAt: Date;
+  customerName?: string;
+  paymentMethod: string;
+  products: CartItem[];
+  reservations: ReservationCartItem[];
+  productSubtotal: number;
+  productTax: number;
+  productTotal: number;
+  reservationsTotal: number;
+  grandTotal: number;
+  isCredit: boolean;
+}
 
 export default function POSPage() {
   const {
@@ -56,6 +73,8 @@ export default function POSPage() {
     tax,
     total,
     productTotal,
+    productSubtotal,
+    productTax,
     reservationsTotal,
     setSelectedPayment,
     setSelectedCustomer,
@@ -66,6 +85,7 @@ export default function POSPage() {
     processSale,
     addReservationToCart,
     removeReservationFromCart,
+    getReceiptData,
   } = usePOS();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,6 +102,10 @@ export default function POSPage() {
     return matchesSearch && matchesCategory;
   });
 
+  // Receipt modal state
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptSaleData, setReceiptSaleData] = useState<ReceiptSaleData | null>(null);
+
   const paymentMethods = [
     { id: "cash", name: "Efectivo", icon: Banknote },
     { id: "card", name: "Tarjeta", icon: CreditCard },
@@ -90,9 +114,33 @@ export default function POSPage() {
   ];
 
   const handleProcessSale = async () => {
-    const success = await processSale(selectedCustomer?.name);
-    if (success) {
+    // Capture data before processing (cart will be cleared after)
+    const receiptData = getReceiptData();
+    const currentPayment = selectedPayment || 'cash';
+    const currentCustomer = selectedCustomer?.name;
+    const currentIsCredit = isCredit;
+
+    const result = await processSale(selectedCustomer?.name);
+    if (result) {
       setCashReceived("");
+      
+      // Prepare and show receipt
+      const saleData: ReceiptSaleData = {
+        id: (result as any).id || crypto.randomUUID(),
+        createdAt: new Date(),
+        customerName: currentCustomer,
+        paymentMethod: currentIsCredit ? 'credit' : currentPayment,
+        products: receiptData.products,
+        reservations: receiptData.reservations,
+        productSubtotal: receiptData.productSubtotal,
+        productTax: receiptData.productTax,
+        productTotal: receiptData.productTotal,
+        reservationsTotal: receiptData.reservationsTotal,
+        grandTotal: receiptData.grandTotal,
+        isCredit: currentIsCredit,
+      };
+      setReceiptSaleData(saleData);
+      setShowReceipt(true);
     }
   };
 
@@ -700,6 +748,13 @@ export default function POSPage() {
           </Button>
         </div>
       </div>
+
+      {/* Combined Receipt Modal */}
+      <CombinedReceiptModal
+        open={showReceipt}
+        onOpenChange={setShowReceipt}
+        saleData={receiptSaleData}
+      />
     </div>
   );
 }

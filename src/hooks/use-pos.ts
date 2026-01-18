@@ -282,6 +282,17 @@ export function usePOS() {
   const tax = productTax;
   const total = productTotal + reservationsTotal;
 
+  // Getters for receipt data
+  const getReceiptData = () => ({
+    products: [...cart],
+    reservations: [...reservationCart],
+    productSubtotal,
+    productTax,
+    productTotal,
+    reservationsTotal,
+    grandTotal: total,
+  });
+
   return {
     categories,
     products,
@@ -299,6 +310,8 @@ export function usePOS() {
     tax,
     total,
     productTotal,
+    productSubtotal,
+    productTax,
     reservationsTotal,
     setSelectedPayment,
     setSelectedCustomer,
@@ -310,6 +323,7 @@ export function usePOS() {
     processSale: processCombinedSale,
     addReservationToCart,
     removeReservationFromCart,
+    getReceiptData,
     refresh: loadData
   };
 }
