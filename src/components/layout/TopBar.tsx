@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Bell, User, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, User, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,6 +27,7 @@ import { GlobalSearch } from "./GlobalSearch";
 
 export function TopBar() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const getInitials = (email: string | undefined) => {
@@ -99,11 +101,14 @@ export function TopBar() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate('/configuracion?tab=perfil')}>
                 <User className="mr-2 h-4 w-4" />
                 Perfil
               </DropdownMenuItem>
-              <DropdownMenuItem>Configuración</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate('/configuracion')}>
+                <Settings className="mr-2 h-4 w-4" />
+                Configuración
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onSelect={() => setShowLogoutDialog(true)}>
                 <LogOut className="mr-2 h-4 w-4" />
