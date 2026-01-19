@@ -101,11 +101,11 @@ export function TopBar() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => navigate('/configuracion?tab=perfil')}>
+              <DropdownMenuItem onClick={() => navigate('/configuracion?tab=perfil')} className="cursor-pointer">
                 <User className="mr-2 h-4 w-4" />
                 Perfil
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => navigate('/configuracion')}>
+              <DropdownMenuItem onClick={() => navigate('/configuracion')} className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
                 Configuración
               </DropdownMenuItem>
