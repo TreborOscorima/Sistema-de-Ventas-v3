@@ -91,7 +91,7 @@ export function TopBar() {
             </DropdownMenuItem>
             <DropdownMenuItem>Configuración</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
+            <DropdownMenuItem className="text-destructive" onSelect={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />
               Cerrar sesión
             </DropdownMenuItem>
