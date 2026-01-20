@@ -30,6 +30,7 @@ import {
 import { useCustomers } from '@/hooks/use-customers';
 import { CustomerForm } from '@/components/customers/CustomerForm';
 import { CustomerBalanceDialog } from '@/components/customers/CustomerBalanceDialog';
+import { CustomerPaymentDialog } from '@/components/customers/CustomerPaymentDialog';
 import { CustomerPurchaseHistory } from '@/components/customers/CustomerPurchaseHistory';
 import { CustomerMovementsHistory } from '@/components/customers/CustomerMovementsHistory';
 import { Customer } from '@/lib/customers';
@@ -45,7 +46,8 @@ import {
   Loader2,
   Mail,
   Phone,
-  History
+  History,
+  Banknote
 } from 'lucide-react';
 
 export default function ClientesPage() {
@@ -62,6 +64,7 @@ export default function ClientesPage() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [movementsDialogOpen, setMovementsDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -87,6 +90,11 @@ export default function ClientesPage() {
   const handleBalanceClick = (customer: Customer) => {
     setSelectedCustomer(customer);
     setBalanceDialogOpen(true);
+  };
+
+  const handlePaymentClick = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setPaymentDialogOpen(true);
   };
 
   const handleHistoryClick = (customer: Customer) => {
@@ -263,6 +271,11 @@ export default function ClientesPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handlePaymentClick(customer)}>
+                            <Banknote className="mr-2 h-4 w-4 text-green-600" />
+                            Registrar Pago
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleEdit(customer)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Editar
@@ -313,6 +326,12 @@ export default function ClientesPage() {
             onOpenChange={setBalanceDialogOpen}
             customer={selectedCustomer}
             onAdjustBalance={adjustBalance}
+          />
+          <CustomerPaymentDialog
+            open={paymentDialogOpen}
+            onOpenChange={setPaymentDialogOpen}
+            customer={selectedCustomer}
+            onRegisterPayment={adjustBalance}
           />
           <CustomerPurchaseHistory
             open={historyDialogOpen}
