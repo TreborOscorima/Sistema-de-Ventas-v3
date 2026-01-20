@@ -120,7 +120,7 @@ export function useCustomers() {
     }
   };
 
-  const adjustBalance = async (customerId: string, amount: number, isDebit: boolean) => {
+  const adjustBalance = async (customerId: string, amount: number, isDebit: boolean, customDescription?: string) => {
     if (!user) return null;
     
     const customer = customers.find(c => c.id === customerId);
@@ -132,11 +132,12 @@ export function useCustomers() {
     const updated = await editCustomer(customerId, { balance: newBalance });
     
     if (updated) {
-      // Record the movement
-      const movementType = isDebit ? 'adjustment_debit' : 'adjustment_credit';
-      const description = isDebit 
+      // Determine movement type and description
+      const isPayment = customDescription?.toLowerCase().includes('pago recibido');
+      const movementType = isPayment ? 'payment' : (isDebit ? 'adjustment_debit' : 'adjustment_credit');
+      const description = customDescription || (isDebit 
         ? `Cargo manual por ${formatCurrencySimple(Math.abs(amount))}`
-        : `Abono manual por ${formatCurrencySimple(Math.abs(amount))}`;
+        : `Abono manual por ${formatCurrencySimple(Math.abs(amount))}`);
       
       try {
         await createBalanceMovement(
