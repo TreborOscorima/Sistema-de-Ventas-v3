@@ -30,6 +30,7 @@ export type Database = {
           tax_id: string | null
           tax_name: string
           tax_rate: number
+          thermal_paper_size: string
           updated_at: string
           user_id: string
         }
@@ -48,6 +49,7 @@ export type Database = {
           tax_id?: string | null
           tax_name?: string
           tax_rate?: number
+          thermal_paper_size?: string
           updated_at?: string
           user_id: string
         }
@@ -66,6 +68,7 @@ export type Database = {
           tax_id?: string | null
           tax_name?: string
           tax_rate?: number
+          thermal_paper_size?: string
           updated_at?: string
           user_id?: string
         }

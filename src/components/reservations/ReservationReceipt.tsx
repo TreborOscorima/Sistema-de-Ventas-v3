@@ -16,7 +16,8 @@ import {
   printThermalReceipt, 
   generateReceiptHeader, 
   generateReceiptFooter,
-  formatCurrency 
+  formatCurrency,
+  ThermalPaperSize
 } from "@/lib/thermal-print";
 
 interface ReservationReceiptProps {
@@ -128,7 +129,8 @@ export function ReservationReceipt({
       ${generateReceiptFooter(settings || null, nowStr)}
     `;
 
-    printThermalReceipt(htmlContent, `Reserva #${reservation.id.slice(0, 8).toUpperCase()}`);
+    const paperSize = (settings as any)?.thermal_paper_size as ThermalPaperSize || '80mm';
+    printThermalReceipt(htmlContent, `Reserva #${reservation.id.slice(0, 8).toUpperCase()}`, paperSize);
   };
 
   const statusInfo = statusLabels[reservation.status];

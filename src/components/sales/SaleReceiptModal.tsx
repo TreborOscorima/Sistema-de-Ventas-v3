@@ -16,7 +16,8 @@ import {
   printThermalReceipt, 
   generateReceiptHeader, 
   generateReceiptFooter,
-  formatCurrency 
+  formatCurrency,
+  ThermalPaperSize
 } from '@/lib/thermal-print';
 
 interface SaleReceiptModalProps {
@@ -120,7 +121,8 @@ export function SaleReceiptModal({
       ${generateReceiptFooter(settings || null, nowStr)}
     `;
 
-    printThermalReceipt(htmlContent, `Ticket #${sale.id.slice(0, 8).toUpperCase()}`);
+    const paperSize = (settings as any)?.thermal_paper_size as ThermalPaperSize || '80mm';
+    printThermalReceipt(htmlContent, `Ticket #${sale.id.slice(0, 8).toUpperCase()}`, paperSize);
   };
 
   if (!sale) return null;
