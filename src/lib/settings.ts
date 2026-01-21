@@ -15,6 +15,7 @@ export interface BusinessSettings {
   receipt_footer: string | null;
   show_tax_on_receipt: boolean;
   show_logo_on_receipt: boolean;
+  thermal_paper_size: '58mm' | '80mm';
   created_at: string;
   updated_at: string;
 }

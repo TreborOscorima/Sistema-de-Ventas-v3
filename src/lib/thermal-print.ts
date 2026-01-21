@@ -1,36 +1,48 @@
 import { BusinessSettings } from './settings';
 
-// Thermal printer configuration for 80mm printers (most common)
-// Character width: ~42-48 characters per line depending on font size
-const CHARS_PER_LINE = 42;
+export type ThermalPaperSize = '58mm' | '80mm';
+
+// Thermal printer configuration
+const PAPER_CONFIG: Record<ThermalPaperSize, { width: string; charsPerLine: number; fontSize: string }> = {
+  '58mm': { width: '58mm', charsPerLine: 32, fontSize: '11px' },
+  '80mm': { width: '80mm', charsPerLine: 42, fontSize: '12px' },
+};
 
 export interface PrintStyles {
   width: string;
   fontSize: string;
   fontFamily: string;
+  charsPerLine: number;
 }
 
-export const THERMAL_STYLES: PrintStyles = {
-  width: '80mm',
-  fontSize: '12px',
-  fontFamily: "'Courier New', 'Consolas', 'Monaco', monospace",
-};
+export function getThermalStyles(paperSize: ThermalPaperSize = '80mm'): PrintStyles {
+  const config = PAPER_CONFIG[paperSize];
+  return {
+    width: config.width,
+    fontSize: config.fontSize,
+    fontFamily: "'Courier New', 'Consolas', 'Monaco', monospace",
+    charsPerLine: config.charsPerLine,
+  };
+}
+
+// Default chars per line for 80mm paper
+const DEFAULT_CHARS_PER_LINE = 42;
 
 // Helper functions for formatting text for thermal printers
-export function centerText(text: string, width: number = CHARS_PER_LINE): string {
+export function centerText(text: string, width: number = DEFAULT_CHARS_PER_LINE): string {
   const trimmed = text.slice(0, width);
   const padding = Math.max(0, Math.floor((width - trimmed.length) / 2));
   return ' '.repeat(padding) + trimmed;
 }
 
-export function leftRightText(left: string, right: string, width: number = CHARS_PER_LINE): string {
+export function leftRightText(left: string, right: string, width: number = DEFAULT_CHARS_PER_LINE): string {
   const maxLeftWidth = width - right.length - 1;
   const leftTrimmed = left.slice(0, maxLeftWidth);
   const spaces = Math.max(1, width - leftTrimmed.length - right.length);
   return leftTrimmed + ' '.repeat(spaces) + right;
 }
 
-export function repeatChar(char: string, count: number = CHARS_PER_LINE): string {
+export function repeatChar(char: string, count: number = DEFAULT_CHARS_PER_LINE): string {
   return char.repeat(count);
 }
 
@@ -39,11 +51,13 @@ export function formatCurrency(amount: number): string {
 }
 
 // Generate CSS for thermal printing
-export function getThermalPrintStyles(): string {
+export function getThermalPrintStyles(paperSize: ThermalPaperSize = '80mm'): string {
+  const styles = getThermalStyles(paperSize);
+  
   return `
     @page {
       margin: 0;
-      size: 80mm auto;
+      size: ${styles.width} auto;
     }
     
     * {
@@ -53,12 +67,12 @@ export function getThermalPrintStyles(): string {
     }
     
     body {
-      font-family: ${THERMAL_STYLES.fontFamily};
-      font-size: ${THERMAL_STYLES.fontSize};
-      width: ${THERMAL_STYLES.width};
-      max-width: ${THERMAL_STYLES.width};
+      font-family: ${styles.fontFamily};
+      font-size: ${styles.fontSize};
+      width: ${styles.width};
+      max-width: ${styles.width};
       margin: 0 auto;
-      padding: 8px;
+      padding: ${paperSize === '58mm' ? '4px' : '8px'};
       background: white;
       color: #000;
       -webkit-print-color-adjust: exact;
@@ -277,8 +291,9 @@ export function getThermalPrintStyles(): string {
 }
 
 // Open print window with thermal-optimized content
-export function printThermalReceipt(htmlContent: string, title: string = 'Ticket'): void {
-  const printWindow = window.open('', '_blank', 'width=320,height=600');
+export function printThermalReceipt(htmlContent: string, title: string = 'Ticket', paperSize: ThermalPaperSize = '80mm'): void {
+  const windowWidth = paperSize === '58mm' ? 280 : 320;
+  const printWindow = window.open('', '_blank', `width=${windowWidth},height=600`);
   
   if (!printWindow) {
     console.error('Could not open print window');
@@ -292,7 +307,7 @@ export function printThermalReceipt(htmlContent: string, title: string = 'Ticket
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${title}</title>
-      <style>${getThermalPrintStyles()}</style>
+      <style>${getThermalPrintStyles(paperSize)}</style>
     </head>
     <body>
       <div class="thermal-receipt">

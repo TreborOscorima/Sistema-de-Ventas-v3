@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useBusinessSettings, useUpdateBusinessSettings } from "@/hooks/use-settings";
-import { Receipt, Image, FileText, Save, Loader2 } from "lucide-react";
+import { Receipt, Image, FileText, Save, Loader2, Printer } from "lucide-react";
 
 export const ReceiptSettings = forwardRef<HTMLDivElement>((_, ref) => {
   const { data: settings, isLoading } = useBusinessSettings();
@@ -14,12 +15,14 @@ export const ReceiptSettings = forwardRef<HTMLDivElement>((_, ref) => {
   const [receiptHeader, setReceiptHeader] = useState("");
   const [receiptFooter, setReceiptFooter] = useState("");
   const [showLogoOnReceipt, setShowLogoOnReceipt] = useState(false);
+  const [thermalPaperSize, setThermalPaperSize] = useState<"58mm" | "80mm">("80mm");
 
   useEffect(() => {
     if (settings) {
       setReceiptHeader(settings.receipt_header || "");
       setReceiptFooter(settings.receipt_footer || "");
       setShowLogoOnReceipt(settings.show_logo_on_receipt);
+      setThermalPaperSize((settings as any).thermal_paper_size || "80mm");
     }
   }, [settings]);
 
@@ -28,7 +31,8 @@ export const ReceiptSettings = forwardRef<HTMLDivElement>((_, ref) => {
       receipt_header: receiptHeader || null,
       receipt_footer: receiptFooter || null,
       show_logo_on_receipt: showLogoOnReceipt,
-    });
+      thermal_paper_size: thermalPaperSize,
+    } as any);
   };
 
   if (isLoading) {
@@ -53,6 +57,41 @@ export const ReceiptSettings = forwardRef<HTMLDivElement>((_, ref) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Thermal Paper Size Selection */}
+        <div className="rounded-lg border p-4 space-y-3">
+          <Label className="flex items-center gap-2">
+            <Printer className="h-4 w-4" />
+            Tamaño de papel térmico
+          </Label>
+          <p className="text-sm text-muted-foreground">
+            Selecciona el ancho de papel de tu impresora térmica
+          </p>
+          <RadioGroup
+            value={thermalPaperSize}
+            onValueChange={(value) => setThermalPaperSize(value as "58mm" | "80mm")}
+            className="flex gap-4"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="58mm" id="paper-58mm" />
+              <Label htmlFor="paper-58mm" className="cursor-pointer">
+                <div className="flex flex-col">
+                  <span className="font-medium">58mm</span>
+                  <span className="text-xs text-muted-foreground">~32 caracteres</span>
+                </div>
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="80mm" id="paper-80mm" />
+              <Label htmlFor="paper-80mm" className="cursor-pointer">
+                <div className="flex flex-col">
+                  <span className="font-medium">80mm</span>
+                  <span className="text-xs text-muted-foreground">~42 caracteres</span>
+                </div>
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
         <div className="flex items-center justify-between rounded-lg border p-4">
           <div className="space-y-0.5">
             <Label className="flex items-center gap-2">

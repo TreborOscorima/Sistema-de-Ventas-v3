@@ -17,7 +17,8 @@ import {
   printThermalReceipt, 
   generateReceiptHeader, 
   generateReceiptFooter,
-  formatCurrency 
+  formatCurrency,
+  ThermalPaperSize
 } from '@/lib/thermal-print';
 
 interface CombinedReceiptModalProps {
@@ -177,7 +178,8 @@ export function CombinedReceiptModal({
     `;
 
     const title = isCombined ? 'Venta Combinada' : hasReservations ? 'Reservas' : 'Venta';
-    printThermalReceipt(htmlContent, `${title} #${saleData.id.slice(0, 8).toUpperCase()}`);
+    const paperSize = (settings as any)?.thermal_paper_size as ThermalPaperSize || '80mm';
+    printThermalReceipt(htmlContent, `${title} #${saleData.id.slice(0, 8).toUpperCase()}`, paperSize);
   };
 
   if (!saleData) return null;
