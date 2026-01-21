@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Printer, X, Receipt } from 'lucide-react';
@@ -11,6 +11,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Sale, SaleItem } from '@/lib/sales';
+import { useBusinessSettings } from '@/hooks/use-settings';
+import { 
+  printThermalReceipt, 
+  generateReceiptHeader, 
+  generateReceiptFooter,
+  formatCurrency 
+} from '@/lib/thermal-print';
 
 interface SaleReceiptModalProps {
   open: boolean;
@@ -26,6 +33,7 @@ const paymentMethodLabels: Record<string, string> = {
   yape: 'Yape',
   plin: 'Plin',
   transfer: 'Transferencia',
+  credit: 'Crédito',
 };
 
 export function SaleReceiptModal({
@@ -36,93 +44,83 @@ export function SaleReceiptModal({
   loading = false,
 }: SaleReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const { data: settings } = useBusinessSettings();
 
   const handlePrint = () => {
-    if (!receiptRef.current) return;
+    if (!sale) return;
     
-    const printContent = receiptRef.current.innerHTML;
-    const printWindow = window.open('', '_blank');
+    const saleDate = new Date(sale.created_at);
+    const dateStr = format(saleDate, "dd/MM/yyyy HH:mm", { locale: es });
+    const nowStr = format(new Date(), "dd/MM/yyyy HH:mm", { locale: es });
     
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Ticket de Venta</title>
-          <style>
-            body {
-              font-family: 'Courier New', monospace;
-              padding: 20px;
-              max-width: 300px;
-              margin: 0 auto;
-            }
-            .receipt-header {
-              text-align: center;
-              margin-bottom: 20px;
-            }
-            .receipt-header h1 {
-              font-size: 18px;
-              margin: 0;
-            }
-            .receipt-header p {
-              font-size: 12px;
-              color: #666;
-              margin: 4px 0;
-            }
-            .receipt-items {
-              width: 100%;
-              border-collapse: collapse;
-            }
-            .receipt-items th,
-            .receipt-items td {
-              padding: 4px 0;
-              font-size: 12px;
-            }
-            .receipt-items th {
-              text-align: left;
-              border-bottom: 1px dashed #000;
-            }
-            .receipt-items td.qty {
-              text-align: center;
-            }
-            .receipt-items td.price {
-              text-align: right;
-            }
-            .receipt-totals {
-              margin-top: 10px;
-              border-top: 1px dashed #000;
-              padding-top: 10px;
-            }
-            .receipt-totals .row {
-              display: flex;
-              justify-content: space-between;
-              font-size: 12px;
-              margin: 4px 0;
-            }
-            .receipt-totals .total {
-              font-size: 16px;
-              font-weight: bold;
-            }
-            .receipt-footer {
-              text-align: center;
-              margin-top: 20px;
-              font-size: 12px;
-              color: #666;
-            }
-            .separator {
-              border-top: 1px dashed #000;
-              margin: 10px 0;
-            }
-          </style>
-        </head>
-        <body>
-          ${printContent}
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
+    const itemsHtml = items.map(item => `
+      <tr>
+        <td class="item-name">${item.product_name}</td>
+        <td class="center">${item.quantity}</td>
+        <td class="right">${formatCurrency(item.total_price)}</td>
+      </tr>
+    `).join('');
+
+    const htmlContent = `
+      ${generateReceiptHeader(settings || null)}
+      
+      <hr class="separator" />
+      
+      <div class="info-row">
+        <span class="label">Ticket:</span>
+        <span class="value">#${sale.id.slice(0, 8).toUpperCase()}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Fecha:</span>
+        <span class="value">${dateStr}</span>
+      </div>
+      ${sale.customer_name ? `
+        <div class="info-row">
+          <span class="label">Cliente:</span>
+          <span class="value">${sale.customer_name}</span>
+        </div>
+      ` : ''}
+      <div class="info-row">
+        <span class="label">Método:</span>
+        <span class="value">${paymentMethodLabels[sale.payment_method] || sale.payment_method}</span>
+      </div>
+      
+      <hr class="separator" />
+      
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th class="center">Cant</th>
+            <th class="right">Precio</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHtml}
+        </tbody>
+      </table>
+      
+      <hr class="separator" />
+      
+      <div class="totals-section">
+        <div class="total-row subtotal">
+          <span>Subtotal:</span>
+          <span>${formatCurrency(sale.subtotal)}</span>
+        </div>
+        <div class="total-row subtotal">
+          <span>${settings?.tax_name || 'IGV'} (${settings?.tax_rate || 18}%):</span>
+          <span>${formatCurrency(sale.tax)}</span>
+        </div>
+        <div class="total-row grand-total">
+          <span>TOTAL:</span>
+          <span>${formatCurrency(sale.total)}</span>
+        </div>
+      </div>
+      
+      ${generateReceiptFooter(settings || null, nowStr)}
+    `;
+
+    printThermalReceipt(htmlContent, `Ticket #${sale.id.slice(0, 8).toUpperCase()}`);
   };
 
   if (!sale) return null;
@@ -131,7 +129,7 @@ export function SaleReceiptModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5" />
@@ -139,22 +137,22 @@ export function SaleReceiptModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div ref={receiptRef} className="bg-background p-4 rounded-lg border border-border">
+        <div ref={receiptRef} className="bg-background p-4 rounded-lg border border-border font-mono text-sm">
           {/* Header */}
-          <div className="receipt-header text-center mb-4">
-            <h1 className="text-lg font-bold">MI NEGOCIO</h1>
-            <p className="text-sm text-muted-foreground">RUC: 20123456789</p>
-            <p className="text-sm text-muted-foreground">Av. Principal 123</p>
-            <p className="text-sm text-muted-foreground">Tel: (01) 234-5678</p>
+          <div className="text-center mb-3">
+            <h1 className="text-base font-bold">{settings?.business_name || 'MI NEGOCIO'}</h1>
+            {settings?.tax_id && <p className="text-xs text-muted-foreground">RUC: {settings.tax_id}</p>}
+            {settings?.address && <p className="text-xs text-muted-foreground">{settings.address}</p>}
+            {settings?.phone && <p className="text-xs text-muted-foreground">Tel: {settings.phone}</p>}
           </div>
 
-          <Separator className="separator" />
+          <Separator className="my-2" />
 
           {/* Sale Info */}
-          <div className="my-3 text-sm">
+          <div className="space-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Ticket:</span>
-              <span className="font-medium">{sale.id.slice(0, 8).toUpperCase()}</span>
+              <span className="font-medium">#{sale.id.slice(0, 8).toUpperCase()}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Fecha:</span>
@@ -172,67 +170,67 @@ export function SaleReceiptModal({
             </div>
           </div>
 
-          <Separator className="separator" />
+          <Separator className="my-2" />
 
           {/* Items */}
           {loading ? (
-            <div className="py-4 text-center text-muted-foreground">
+            <div className="py-3 text-center text-muted-foreground text-xs">
               Cargando items...
             </div>
           ) : (
-            <table className="receipt-items w-full text-sm">
+            <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-dashed border-border">
-                  <th className="text-left py-2">Producto</th>
-                  <th className="text-center py-2">Cant</th>
-                  <th className="text-right py-2">Precio</th>
+                  <th className="text-left py-1">Producto</th>
+                  <th className="text-center py-1 w-12">Cant</th>
+                  <th className="text-right py-1 w-16">Precio</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id}>
-                    <td className="py-1">{item.product_name}</td>
-                    <td className="qty text-center">{item.quantity}</td>
-                    <td className="price text-right">S/ {item.total_price.toFixed(2)}</td>
+                    <td className="py-1 truncate max-w-[120px]">{item.product_name}</td>
+                    <td className="text-center">{item.quantity}</td>
+                    <td className="text-right">{formatCurrency(item.total_price)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
 
-          <Separator className="separator" />
+          <Separator className="my-2" />
 
           {/* Totals */}
-          <div className="receipt-totals space-y-1 text-sm">
-            <div className="row flex justify-between">
-              <span className="text-muted-foreground">Subtotal:</span>
-              <span>S/ {sale.subtotal.toFixed(2)}</span>
+          <div className="space-y-1 text-xs">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Subtotal:</span>
+              <span>{formatCurrency(sale.subtotal)}</span>
             </div>
-            <div className="row flex justify-between">
-              <span className="text-muted-foreground">IGV (18%):</span>
-              <span>S/ {sale.tax.toFixed(2)}</span>
+            <div className="flex justify-between text-muted-foreground">
+              <span>{settings?.tax_name || 'IGV'} ({settings?.tax_rate || 18}%):</span>
+              <span>{formatCurrency(sale.tax)}</span>
             </div>
-            <div className="row total flex justify-between text-lg font-bold mt-2">
+            <div className="flex justify-between text-sm font-bold pt-1 border-t border-border">
               <span>TOTAL:</span>
-              <span>S/ {sale.total.toFixed(2)}</span>
+              <span>{formatCurrency(sale.total)}</span>
             </div>
           </div>
 
-          <Separator className="separator" />
+          <Separator className="my-2" />
 
           {/* Footer */}
-          <div className="receipt-footer text-center text-xs text-muted-foreground mt-4">
-            <p>¡Gracias por su compra!</p>
-            <p>Conserve este ticket</p>
+          <div className="text-center text-xs text-muted-foreground">
+            <p className="font-medium">{settings?.receipt_footer || '¡Gracias por su compra!'}</p>
+            <p className="mt-1">Conserve este ticket</p>
           </div>
         </div>
 
-        <div className="flex gap-2 mt-4">
-          <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+        <div className="flex gap-2 mt-3">
+          <Button variant="outline" size="sm" className="flex-1" onClick={() => onOpenChange(false)}>
             <X className="mr-2 h-4 w-4" />
             Cerrar
           </Button>
-          <Button className="flex-1" onClick={handlePrint}>
+          <Button size="sm" className="flex-1" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
             Imprimir
           </Button>

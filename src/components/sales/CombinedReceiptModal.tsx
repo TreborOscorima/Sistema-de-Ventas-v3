@@ -12,6 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { CartItem } from '@/lib/sales';
 import { ReservationCartItem } from '@/hooks/use-pos';
+import { useBusinessSettings } from '@/hooks/use-settings';
+import { 
+  printThermalReceipt, 
+  generateReceiptHeader, 
+  generateReceiptFooter,
+  formatCurrency 
+} from '@/lib/thermal-print';
 
 interface CombinedReceiptModalProps {
   open: boolean;
@@ -47,140 +54,130 @@ export function CombinedReceiptModal({
   saleData,
 }: CombinedReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const { data: settings } = useBusinessSettings();
 
   const handlePrint = () => {
-    if (!receiptRef.current) return;
+    if (!saleData) return;
     
-    const printContent = receiptRef.current.innerHTML;
-    const printWindow = window.open('', '_blank');
+    const dateStr = format(saleData.createdAt, "dd/MM/yyyy HH:mm", { locale: es });
+    const nowStr = format(new Date(), "dd/MM/yyyy HH:mm", { locale: es });
     
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Ticket de Venta</title>
-          <style>
-            body {
-              font-family: 'Courier New', monospace;
-              padding: 20px;
-              max-width: 300px;
-              margin: 0 auto;
-              font-size: 12px;
-            }
-            .receipt-header {
-              text-align: center;
-              margin-bottom: 15px;
-            }
-            .receipt-header h1 {
-              font-size: 16px;
-              margin: 0;
-            }
-            .receipt-header p {
-              font-size: 11px;
-              color: #666;
-              margin: 2px 0;
-            }
-            .separator {
-              border-top: 1px dashed #000;
-              margin: 10px 0;
-            }
-            .section-title {
-              font-weight: bold;
-              font-size: 11px;
-              text-transform: uppercase;
-              margin: 8px 0 4px 0;
-              display: flex;
-              align-items: center;
-              gap: 6px;
-            }
-            .section-title svg {
-              width: 12px;
-              height: 12px;
-            }
-            .item-row {
-              display: flex;
-              justify-content: space-between;
-              margin: 2px 0;
-              font-size: 11px;
-            }
-            .item-row .name {
-              flex: 1;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-            }
-            .item-row .qty {
-              margin: 0 8px;
-              min-width: 30px;
-              text-align: center;
-            }
-            .item-row .price {
-              min-width: 60px;
-              text-align: right;
-            }
-            .reservation-item {
-              margin: 6px 0;
-              padding: 4px 0;
-            }
-            .reservation-item .name {
-              font-weight: bold;
-              font-size: 11px;
-            }
-            .reservation-item .details {
-              font-size: 10px;
-              color: #666;
-            }
-            .reservation-item .price-row {
-              display: flex;
-              justify-content: space-between;
-              font-size: 11px;
-            }
-            .totals {
-              margin-top: 10px;
-            }
-            .totals .row {
-              display: flex;
-              justify-content: space-between;
-              margin: 2px 0;
-            }
-            .totals .row.subtotal {
-              font-size: 11px;
-              color: #666;
-            }
-            .totals .row.grand-total {
-              font-size: 14px;
-              font-weight: bold;
-              margin-top: 6px;
-              padding-top: 6px;
-              border-top: 1px dashed #000;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 15px;
-              font-size: 10px;
-              color: #666;
-            }
-            .credit-badge {
-              background: #f59e0b;
-              color: white;
-              padding: 2px 6px;
-              border-radius: 4px;
-              font-size: 10px;
-              font-weight: bold;
-              display: inline-block;
-              margin-top: 4px;
-            }
-          </style>
-        </head>
-        <body>
-          ${printContent}
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
+    const hasProducts = saleData.products.length > 0;
+    const hasReservations = saleData.reservations.length > 0;
+    const isCombined = hasProducts && hasReservations;
+
+    // Generate reservations HTML
+    const reservationsHtml = saleData.reservations.map(reservation => `
+      <div class="reservation-item">
+        <div class="court-name">${reservation.courtName}</div>
+        <div class="customer-name">${reservation.customerName}</div>
+        <div class="datetime">
+          ${format(new Date(reservation.date), "EEE d 'de' MMM", { locale: es })} • ${reservation.startTime.slice(0, 5)} - ${reservation.endTime.slice(0, 5)}
+        </div>
+        <div class="price-row">
+          <span></span>
+          <span>${formatCurrency(reservation.price)}</span>
+        </div>
+      </div>
+    `).join('');
+
+    // Generate products HTML
+    const productsHtml = saleData.products.map(item => `
+      <tr>
+        <td class="item-name">${item.name}</td>
+        <td class="center">${item.quantity}</td>
+        <td class="right">${formatCurrency(item.price * item.quantity)}</td>
+      </tr>
+    `).join('');
+
+    const htmlContent = `
+      ${generateReceiptHeader(settings || null)}
+      
+      <hr class="separator" />
+      
+      <div class="info-row">
+        <span class="label">Ticket:</span>
+        <span class="value">#${saleData.id.slice(0, 8).toUpperCase()}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Fecha:</span>
+        <span class="value">${dateStr}</span>
+      </div>
+      ${saleData.customerName ? `
+        <div class="info-row">
+          <span class="label">Cliente:</span>
+          <span class="value">${saleData.customerName}</span>
+        </div>
+      ` : ''}
+      <div class="info-row">
+        <span class="label">Método:</span>
+        <span class="value">
+          ${paymentMethodLabels[saleData.paymentMethod] || saleData.paymentMethod}
+          ${saleData.isCredit ? ' <span class="status-badge status-credit">CRÉDITO</span>' : ''}
+        </span>
+      </div>
+      
+      <hr class="separator" />
+      
+      ${hasReservations ? `
+        <div class="section-title">📅 RESERVAS</div>
+        ${reservationsHtml}
+        ${isCombined ? `
+          <div class="total-row subtotal" style="margin-top: 8px; padding-top: 4px; border-top: 1px dotted #ccc;">
+            <span>Subtotal Reservas:</span>
+            <span>${formatCurrency(saleData.reservationsTotal)}</span>
+          </div>
+        ` : ''}
+      ` : ''}
+      
+      ${hasProducts ? `
+        ${isCombined ? '<hr class="separator" />' : ''}
+        <div class="section-title">🛒 PRODUCTOS</div>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="center">Cant</th>
+              <th class="right">Precio</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${productsHtml}
+          </tbody>
+        </table>
+        
+        <div class="totals-section" style="border-top: 1px dotted #ccc; padding-top: 4px; margin-top: 4px;">
+          <div class="total-row subtotal">
+            <span>Subtotal:</span>
+            <span>${formatCurrency(saleData.productSubtotal)}</span>
+          </div>
+          <div class="total-row subtotal">
+            <span>${settings?.tax_name || 'IGV'} (${settings?.tax_rate || 18}%):</span>
+            <span>${formatCurrency(saleData.productTax)}</span>
+          </div>
+          ${isCombined ? `
+            <div class="total-row subtotal">
+              <span>Subtotal Productos:</span>
+              <span>${formatCurrency(saleData.productTotal)}</span>
+            </div>
+          ` : ''}
+        </div>
+      ` : ''}
+      
+      <hr class="separator-double" />
+      
+      <div class="totals-section">
+        <div class="total-row grand-total">
+          <span>TOTAL:</span>
+          <span>${formatCurrency(saleData.grandTotal)}</span>
+        </div>
+      </div>
+      
+      ${generateReceiptFooter(settings || null, nowStr)}
+    `;
+
+    const title = isCombined ? 'Venta Combinada' : hasReservations ? 'Reservas' : 'Venta';
+    printThermalReceipt(htmlContent, `${title} #${saleData.id.slice(0, 8).toUpperCase()}`);
   };
 
   if (!saleData) return null;
@@ -193,7 +190,7 @@ export function CombinedReceiptModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5" />
@@ -201,22 +198,22 @@ export function CombinedReceiptModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div ref={receiptRef} className="bg-background p-4 rounded-lg border border-border">
+        <div ref={receiptRef} className="bg-background p-4 rounded-lg border border-border font-mono text-sm">
           {/* Header */}
-          <div className="receipt-header text-center mb-4">
-            <h1 className="text-lg font-bold">MI NEGOCIO</h1>
-            <p className="text-sm text-muted-foreground">RUC: 20123456789</p>
-            <p className="text-sm text-muted-foreground">Av. Principal 123</p>
-            <p className="text-sm text-muted-foreground">Tel: (01) 234-5678</p>
+          <div className="text-center mb-3">
+            <h1 className="text-base font-bold">{settings?.business_name || 'MI NEGOCIO'}</h1>
+            {settings?.tax_id && <p className="text-xs text-muted-foreground">RUC: {settings.tax_id}</p>}
+            {settings?.address && <p className="text-xs text-muted-foreground">{settings.address}</p>}
+            {settings?.phone && <p className="text-xs text-muted-foreground">Tel: {settings.phone}</p>}
           </div>
 
-          <Separator className="separator" />
+          <Separator className="my-2" />
 
           {/* Sale Info */}
-          <div className="my-3 text-sm space-y-1">
+          <div className="space-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Ticket:</span>
-              <span className="font-medium">{saleData.id.slice(0, 8).toUpperCase()}</span>
+              <span className="font-medium">#{saleData.id.slice(0, 8).toUpperCase()}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Fecha:</span>
@@ -230,10 +227,10 @@ export function CombinedReceiptModal({
             )}
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Método:</span>
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-1">
                 {paymentMethodLabels[saleData.paymentMethod] || saleData.paymentMethod}
                 {saleData.isCredit && (
-                  <span className="credit-badge bg-amber-500 text-white px-2 py-0.5 rounded text-xs font-bold">
+                  <span className="bg-amber-500 text-white px-1.5 py-0.5 rounded text-[9px] font-bold">
                     CRÉDITO
                   </span>
                 )}
@@ -241,37 +238,37 @@ export function CombinedReceiptModal({
             </div>
           </div>
 
-          <Separator className="separator" />
+          <Separator className="my-2" />
 
           {/* Reservations Section */}
           {hasReservations && (
             <>
-              <div className="section-title flex items-center gap-2 font-bold text-xs uppercase mt-3 mb-2">
+              <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider mb-2">
                 <Calendar className="h-3 w-3" />
                 <span>Reservas</span>
               </div>
               
               <div className="space-y-2">
                 {saleData.reservations.map((reservation) => (
-                  <div key={reservation.id} className="reservation-item py-1">
+                  <div key={reservation.id} className="py-1 border-b border-dotted border-border last:border-0">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{reservation.courtName}</p>
-                        <p className="text-xs text-muted-foreground">{reservation.customerName}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="font-medium text-xs">{reservation.courtName}</p>
+                        <p className="text-[10px] text-muted-foreground">{reservation.customerName}</p>
+                        <p className="text-[10px] text-muted-foreground">
                           {format(new Date(reservation.date), "EEE d 'de' MMM", { locale: es })} • {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
                         </p>
                       </div>
-                      <span className="font-semibold text-sm">S/ {reservation.price.toFixed(2)}</span>
+                      <span className="font-semibold text-xs">{formatCurrency(reservation.price)}</span>
                     </div>
                   </div>
                 ))}
               </div>
 
               {isCombined && (
-                <div className="flex justify-between text-sm mt-2 pt-2 border-t border-dashed border-border">
+                <div className="flex justify-between text-xs mt-2 pt-1 border-t border-dotted border-border">
                   <span className="text-muted-foreground">Subtotal Reservas:</span>
-                  <span>S/ {saleData.reservationsTotal.toFixed(2)}</span>
+                  <span>{formatCurrency(saleData.reservationsTotal)}</span>
                 </div>
               )}
             </>
@@ -280,76 +277,73 @@ export function CombinedReceiptModal({
           {/* Products Section */}
           {hasProducts && (
             <>
-              {isCombined && <Separator className="separator my-3" />}
+              {isCombined && <Separator className="my-2" />}
               
-              <div className="section-title flex items-center gap-2 font-bold text-xs uppercase mt-3 mb-2">
+              <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider mb-2">
                 <ShoppingBag className="h-3 w-3" />
                 <span>Productos</span>
               </div>
               
-              <table className="w-full text-sm">
+              <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-dashed border-border">
-                    <th className="text-left py-1 text-xs">Producto</th>
-                    <th className="text-center py-1 text-xs">Cant</th>
-                    <th className="text-right py-1 text-xs">Precio</th>
+                    <th className="text-left py-1 text-[10px]">Producto</th>
+                    <th className="text-center py-1 text-[10px] w-10">Cant</th>
+                    <th className="text-right py-1 text-[10px] w-14">Precio</th>
                   </tr>
                 </thead>
                 <tbody>
                   {saleData.products.map((item, index) => (
                     <tr key={index}>
-                      <td className="py-1 text-xs">{item.name}</td>
-                      <td className="text-center text-xs">{item.quantity}</td>
-                      <td className="text-right text-xs">S/ {(item.price * item.quantity).toFixed(2)}</td>
+                      <td className="py-1 text-[11px] truncate max-w-[100px]">{item.name}</td>
+                      <td className="text-center text-[11px]">{item.quantity}</td>
+                      <td className="text-right text-[11px]">{formatCurrency(item.price * item.quantity)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
-              <div className="mt-2 pt-2 border-t border-dashed border-border space-y-1 text-sm">
+              <div className="mt-2 pt-1 border-t border-dotted border-border space-y-0.5 text-xs">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal:</span>
-                  <span>S/ {saleData.productSubtotal.toFixed(2)}</span>
+                  <span>{formatCurrency(saleData.productSubtotal)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
-                  <span>IGV (18%):</span>
-                  <span>S/ {saleData.productTax.toFixed(2)}</span>
+                  <span>{settings?.tax_name || 'IGV'} ({settings?.tax_rate || 18}%):</span>
+                  <span>{formatCurrency(saleData.productTax)}</span>
                 </div>
                 {isCombined && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal Productos:</span>
-                    <span>S/ {saleData.productTotal.toFixed(2)}</span>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Subtotal Productos:</span>
+                    <span>{formatCurrency(saleData.productTotal)}</span>
                   </div>
                 )}
               </div>
             </>
           )}
 
-          <Separator className="separator my-3" />
-
-          {/* Grand Total */}
-          <div className="totals">
-            <div className="row grand-total flex justify-between text-lg font-bold">
+          <div className="border-t-2 border-border mt-3 pt-2">
+            <div className="flex justify-between text-sm font-bold">
               <span>TOTAL:</span>
-              <span>S/ {saleData.grandTotal.toFixed(2)}</span>
+              <span>{formatCurrency(saleData.grandTotal)}</span>
             </div>
           </div>
 
-          <Separator className="separator my-3" />
+          <Separator className="my-2" />
 
           {/* Footer */}
-          <div className="footer text-center text-xs text-muted-foreground">
-            <p>¡Gracias por su preferencia!</p>
-            <p>Conserve este ticket</p>
+          <div className="text-center text-xs text-muted-foreground">
+            <p className="font-medium">{settings?.receipt_footer || '¡Gracias por su preferencia!'}</p>
+            <p className="mt-1">Conserve este ticket</p>
           </div>
         </div>
 
-        <div className="flex gap-2 mt-4">
-          <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+        <div className="flex gap-2 mt-3">
+          <Button variant="outline" size="sm" className="flex-1" onClick={() => onOpenChange(false)}>
             <X className="mr-2 h-4 w-4" />
             Cerrar
           </Button>
-          <Button className="flex-1" onClick={handlePrint}>
+          <Button size="sm" className="flex-1" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
             Imprimir
           </Button>
