@@ -1,5 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useSalesReports } from '@/hooks/use-sales-reports';
+import { useCategoryReports } from '@/hooks/use-category-reports';
+import { useReservationsReports } from '@/hooks/use-reservations-reports';
+import { useCashboxReports } from '@/hooks/use-cashbox-reports';
+import { useComparativeReports } from '@/hooks/use-comparative-reports';
 import { useCustomers } from '@/hooks/use-customers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -21,7 +25,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileText, Users, DollarSign, AlertTriangle, Download, Search, Filter, BarChart3, TrendingUp } from 'lucide-react';
+import { 
+  FileText, Users, DollarSign, AlertTriangle, Download, Search, Filter, 
+  BarChart3, TrendingUp, Tags, Calendar, Banknote, GitCompare,
+  CalendarCheck, Percent
+} from 'lucide-react';
 
 import { ReportsSummaryCards } from '@/components/reports/ReportsSummaryCards';
 import { SalesOverviewChart } from '@/components/reports/SalesOverviewChart';
@@ -29,17 +37,62 @@ import { PaymentMethodsChart } from '@/components/reports/PaymentMethodsChart';
 import { TopProductsTable } from '@/components/reports/TopProductsTable';
 import { HourlySalesChart } from '@/components/reports/HourlySalesChart';
 import { PeriodSelector } from '@/components/reports/PeriodSelector';
+import { CategorySalesChart } from '@/components/reports/CategorySalesChart';
+import { ReservationsOverviewChart } from '@/components/reports/ReservationsOverviewChart';
+import { CourtPerformanceTable } from '@/components/reports/CourtPerformanceTable';
+import { PopularTimeSlotsChart } from '@/components/reports/PopularTimeSlotsChart';
+import { CashboxSessionsTable } from '@/components/reports/CashboxSessionsTable';
+import { MovementsByTypeChart } from '@/components/reports/MovementsByTypeChart';
+import { ComparativeCards } from '@/components/reports/ComparativeCards';
 
 export default function ReportesPage() {
   const {
-    reportData,
+    reportData: salesData,
     loading: salesLoading,
-    period,
-    setPeriod,
-    customRange,
-    setCustomRange,
-    refresh
+    period: salesPeriod,
+    setPeriod: setSalesPeriod,
+    customRange: salesCustomRange,
+    setCustomRange: setSalesCustomRange,
+    refresh: refreshSales
   } = useSalesReports();
+
+  const {
+    reportData: categoryData,
+    loading: categoryLoading,
+    period: categoryPeriod,
+    setPeriod: setCategoryPeriod,
+    customRange: categoryCustomRange,
+    setCustomRange: setCategoryCustomRange,
+    refresh: refreshCategory
+  } = useCategoryReports();
+
+  const {
+    reportData: reservationsData,
+    loading: reservationsLoading,
+    period: reservationsPeriod,
+    setPeriod: setReservationsPeriod,
+    customRange: reservationsCustomRange,
+    setCustomRange: setReservationsCustomRange,
+    refresh: refreshReservations
+  } = useReservationsReports();
+
+  const {
+    reportData: cashboxData,
+    loading: cashboxLoading,
+    period: cashboxPeriod,
+    setPeriod: setCashboxPeriod,
+    customRange: cashboxCustomRange,
+    setCustomRange: setCashboxCustomRange,
+    refresh: refreshCashbox
+  } = useCashboxReports();
+
+  const {
+    reportData: comparativeData,
+    loading: comparativeLoading,
+    comparisonType,
+    setComparisonType,
+    refresh: refreshComparative
+  } = useComparativeReports();
 
   const { allCustomers, loading: customersLoading } = useCustomers();
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,7 +165,7 @@ export default function ReportesPage() {
 
   const exportSalesCSV = () => {
     const headers = ['Fecha', 'Ventas', 'Transacciones'];
-    const rows = reportData.salesByDay.map(d => [d.date, d.sales.toFixed(2), d.transactions.toString()]);
+    const rows = salesData.salesByDay.map(d => [d.date, d.sales.toFixed(2), d.transactions.toString()]);
 
     const csvContent = [
       headers.join(','),
@@ -159,55 +212,71 @@ export default function ReportesPage() {
     <div className="space-y-6">
       <div className="page-header animate-fade-in">
         <h1 className="page-title">Reportes</h1>
-        <p className="page-subtitle">Análisis de ventas, productos y cuentas por cobrar</p>
+        <p className="page-subtitle">Análisis completo de ventas, reservas, caja y más</p>
       </div>
 
       <Tabs defaultValue="sales" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+        <TabsList className="flex flex-wrap h-auto gap-1 p-1">
           <TabsTrigger value="sales" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Ventas</span>
+          </TabsTrigger>
+          <TabsTrigger value="categories" className="gap-2">
+            <Tags className="h-4 w-4" />
+            <span className="hidden sm:inline">Categorías</span>
           </TabsTrigger>
           <TabsTrigger value="products" className="gap-2">
             <TrendingUp className="h-4 w-4" />
             <span className="hidden sm:inline">Productos</span>
           </TabsTrigger>
+          <TabsTrigger value="reservations" className="gap-2">
+            <Calendar className="h-4 w-4" />
+            <span className="hidden sm:inline">Reservas</span>
+          </TabsTrigger>
+          <TabsTrigger value="cashbox" className="gap-2">
+            <Banknote className="h-4 w-4" />
+            <span className="hidden sm:inline">Caja</span>
+          </TabsTrigger>
+          <TabsTrigger value="comparative" className="gap-2">
+            <GitCompare className="h-4 w-4" />
+            <span className="hidden sm:inline">Comparativo</span>
+          </TabsTrigger>
           <TabsTrigger value="debt" className="gap-2">
             <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Cuentas por Cobrar</span>
+            <span className="hidden sm:inline">Deudas</span>
           </TabsTrigger>
         </TabsList>
 
         {/* Sales Tab */}
         <TabsContent value="sales" className="space-y-6">
           <PeriodSelector
-            period={period}
-            onPeriodChange={setPeriod}
-            customRange={customRange}
-            onCustomRangeChange={setCustomRange}
-            onRefresh={refresh}
+            period={salesPeriod}
+            onPeriodChange={setSalesPeriod}
+            customRange={salesCustomRange}
+            onCustomRangeChange={setSalesCustomRange}
+            onRefresh={refreshSales}
             loading={salesLoading}
           />
 
           <ReportsSummaryCards
-            totalSales={reportData.totalSales}
-            totalTransactions={reportData.totalTransactions}
-            averageTicket={reportData.averageTicket}
-            totalProducts={reportData.totalProducts}
-            cancelledSales={reportData.cancelledSales}
+            totalSales={salesData.totalSales}
+            totalTransactions={salesData.totalTransactions}
+            averageTicket={salesData.averageTicket}
+            totalProducts={salesData.totalProducts}
+            cancelledSales={salesData.cancelledSales}
             loading={salesLoading}
           />
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <SalesOverviewChart data={reportData.salesByDay} loading={salesLoading} />
+              <SalesOverviewChart data={salesData.salesByDay} loading={salesLoading} />
             </div>
             <div>
-              <PaymentMethodsChart data={reportData.salesByPaymentMethod} loading={salesLoading} />
+              <PaymentMethodsChart data={salesData.salesByPaymentMethod} loading={salesLoading} />
             </div>
           </div>
 
-          <HourlySalesChart data={reportData.salesByHour} loading={salesLoading} />
+          <HourlySalesChart data={salesData.salesByHour} loading={salesLoading} />
 
           <div className="flex justify-end">
             <Button variant="outline" onClick={exportSalesCSV} disabled={salesLoading}>
@@ -217,18 +286,221 @@ export default function ReportesPage() {
           </div>
         </TabsContent>
 
+        {/* Categories Tab */}
+        <TabsContent value="categories" className="space-y-6">
+          <PeriodSelector
+            period={categoryPeriod}
+            onPeriodChange={setCategoryPeriod}
+            customRange={categoryCustomRange}
+            onCustomRangeChange={setCategoryCustomRange}
+            onRefresh={refreshCategory}
+            loading={categoryLoading}
+          />
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Ingresos</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(categoryData.totalRevenue)}</div>
+                <p className="text-xs text-muted-foreground">En el período seleccionado</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Unidades Vendidas</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{categoryData.totalUnitsSold}</div>
+                <p className="text-xs text-muted-foreground">Total de productos</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <CategorySalesChart data={categoryData.salesByCategory} loading={categoryLoading} />
+        </TabsContent>
+
         {/* Products Tab */}
         <TabsContent value="products" className="space-y-6">
           <PeriodSelector
-            period={period}
-            onPeriodChange={setPeriod}
-            customRange={customRange}
-            onCustomRangeChange={setCustomRange}
-            onRefresh={refresh}
+            period={salesPeriod}
+            onPeriodChange={setSalesPeriod}
+            customRange={salesCustomRange}
+            onCustomRangeChange={setSalesCustomRange}
+            onRefresh={refreshSales}
             loading={salesLoading}
           />
 
-          <TopProductsTable data={reportData.topProducts} loading={salesLoading} />
+          <TopProductsTable data={salesData.topProducts} loading={salesLoading} />
+        </TabsContent>
+
+        {/* Reservations Tab */}
+        <TabsContent value="reservations" className="space-y-6">
+          <PeriodSelector
+            period={reservationsPeriod}
+            onPeriodChange={setReservationsPeriod}
+            customRange={reservationsCustomRange}
+            onCustomRangeChange={setReservationsCustomRange}
+            onRefresh={refreshReservations}
+            loading={reservationsLoading}
+          />
+
+          {/* Summary Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Reservas</CardTitle>
+                <CalendarCheck className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{reservationsData.totalReservations}</div>
+                <p className="text-xs text-muted-foreground">
+                  {reservationsData.completedReservations} completadas
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Ingresos</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(reservationsData.totalRevenue)}</div>
+                <p className="text-xs text-muted-foreground">
+                  Promedio: {formatCurrency(reservationsData.averageReservationValue)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Ocupación</CardTitle>
+                <Percent className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{reservationsData.occupancyRate.toFixed(1)}%</div>
+                <p className="text-xs text-muted-foreground">Tasa de ocupación</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Cancelaciones</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-destructive">{reservationsData.cancelledReservations}</div>
+                <p className="text-xs text-muted-foreground">
+                  {reservationsData.pendingReservations} pendientes
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ReservationsOverviewChart data={reservationsData.reservationsByDay} loading={reservationsLoading} />
+            <CourtPerformanceTable data={reservationsData.reservationsByCourt} loading={reservationsLoading} />
+          </div>
+
+          <PopularTimeSlotsChart data={reservationsData.popularTimeSlots} loading={reservationsLoading} />
+        </TabsContent>
+
+        {/* Cashbox Tab */}
+        <TabsContent value="cashbox" className="space-y-6">
+          <PeriodSelector
+            period={cashboxPeriod}
+            onPeriodChange={setCashboxPeriod}
+            customRange={cashboxCustomRange}
+            onCustomRangeChange={setCashboxCustomRange}
+            onRefresh={refreshCashbox}
+            loading={cashboxLoading}
+          />
+
+          {/* Summary Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Sesiones</CardTitle>
+                <Banknote className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{cashboxData.totalSessions}</div>
+                <p className="text-xs text-muted-foreground">
+                  Promedio: {cashboxData.averageSessionDuration.toFixed(1)}h
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Ingresos</CardTitle>
+                <TrendingUp className="h-4 w-4 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary">{formatCurrency(cashboxData.totalIncome)}</div>
+                <p className="text-xs text-muted-foreground">Entradas de dinero</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Egresos</CardTitle>
+                <TrendingUp className="h-4 w-4 text-destructive rotate-180" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-destructive">{formatCurrency(cashboxData.totalExpenses)}</div>
+                <p className="text-xs text-muted-foreground">Salidas de dinero</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Balance Neto</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${cashboxData.netBalance >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                  {formatCurrency(cashboxData.netBalance)}
+                </div>
+                <p className="text-xs text-muted-foreground">Ingresos - Egresos</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <PaymentMethodsChart data={cashboxData.incomeByPaymentMethod} loading={cashboxLoading} />
+            <MovementsByTypeChart data={cashboxData.movementsByType} loading={cashboxLoading} />
+          </div>
+
+          <CashboxSessionsTable data={cashboxData.sessionsSummary} loading={cashboxLoading} />
+        </TabsContent>
+
+        {/* Comparative Tab */}
+        <TabsContent value="comparative" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Select value={comparisonType} onValueChange={(value) => setComparisonType(value as 'day' | 'week' | 'month')}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Comparar por..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="day">Hoy vs Ayer</SelectItem>
+                  <SelectItem value="week">Esta semana vs Anterior</SelectItem>
+                  <SelectItem value="month">Este mes vs Anterior</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="icon" onClick={refreshComparative} disabled={comparativeLoading}>
+                <TrendingUp className={`h-4 w-4 ${comparativeLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          </div>
+
+          <ComparativeCards
+            currentPeriod={comparativeData.currentPeriod}
+            previousPeriod={comparativeData.previousPeriod}
+            changes={comparativeData.changes}
+            currentPeriodLabel={comparativeData.currentPeriodLabel}
+            previousPeriodLabel={comparativeData.previousPeriodLabel}
+            loading={comparativeLoading}
+          />
         </TabsContent>
 
         {/* Debt Tab */}
