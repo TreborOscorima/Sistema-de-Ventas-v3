@@ -14,6 +14,7 @@ import {
   Wallet,
   BarChart3,
   Box,
+  Truck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ const navigation = [
   { name: "Punto de Venta", href: "/pos", icon: ShoppingCart },
   { name: "Productos", href: "/productos", icon: Package },
   { name: "Categorías", href: "/categorias", icon: Box },
+  { name: "Compras", href: "/compras", icon: Truck },
   { name: "Clientes", href: "/clientes", icon: Users },
   { name: "Ventas", href: "/ventas", icon: Receipt },
   { name: "Caja", href: "/caja", icon: Wallet },
