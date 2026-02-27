@@ -4,6 +4,7 @@ import { useCategoryReports } from '@/hooks/use-category-reports';
 import { useReservationsReports } from '@/hooks/use-reservations-reports';
 import { useCashboxReports } from '@/hooks/use-cashbox-reports';
 import { useComparativeReports } from '@/hooks/use-comparative-reports';
+import { usePurchasesReports } from '@/hooks/use-purchases-reports';
 import { useCustomers } from '@/hooks/use-customers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -28,7 +29,7 @@ import {
 import { 
   FileText, Users, DollarSign, AlertTriangle, Download, Search, Filter, 
   BarChart3, TrendingUp, Tags, Calendar, Banknote, GitCompare,
-  CalendarCheck, Percent
+  CalendarCheck, Percent, ShoppingCart, Package
 } from 'lucide-react';
 
 import { ReportsSummaryCards } from '@/components/reports/ReportsSummaryCards';
@@ -44,6 +45,9 @@ import { PopularTimeSlotsChart } from '@/components/reports/PopularTimeSlotsChar
 import { CashboxSessionsTable } from '@/components/reports/CashboxSessionsTable';
 import { MovementsByTypeChart } from '@/components/reports/MovementsByTypeChart';
 import { ComparativeCards } from '@/components/reports/ComparativeCards';
+import { PurchasesOverviewChart } from '@/components/reports/PurchasesOverviewChart';
+import { PurchasesBySupplierChart } from '@/components/reports/PurchasesBySupplierChart';
+import { ProductCostsTable } from '@/components/reports/ProductCostsTable';
 
 export default function ReportesPage() {
   const {
@@ -93,6 +97,16 @@ export default function ReportesPage() {
     setComparisonType,
     refresh: refreshComparative
   } = useComparativeReports();
+
+  const {
+    reportData: purchasesData,
+    loading: purchasesLoading,
+    period: purchasesPeriod,
+    setPeriod: setPurchasesPeriod,
+    customRange: purchasesCustomRange,
+    setCustomRange: setPurchasesCustomRange,
+    refresh: refreshPurchases
+  } = usePurchasesReports();
 
   const { allCustomers, loading: customersLoading } = useCustomers();
   const [searchQuery, setSearchQuery] = useState('');
@@ -240,6 +254,10 @@ export default function ReportesPage() {
           <TabsTrigger value="comparative" className="gap-2">
             <GitCompare className="h-4 w-4" />
             <span className="hidden sm:inline">Comparativo</span>
+          </TabsTrigger>
+          <TabsTrigger value="purchases" className="gap-2">
+            <ShoppingCart className="h-4 w-4" />
+            <span className="hidden sm:inline">Compras</span>
           </TabsTrigger>
           <TabsTrigger value="debt" className="gap-2">
             <Users className="h-4 w-4" />
@@ -501,6 +519,73 @@ export default function ReportesPage() {
             previousPeriodLabel={comparativeData.previousPeriodLabel}
             loading={comparativeLoading}
           />
+        </TabsContent>
+
+        {/* Purchases Tab */}
+        <TabsContent value="purchases" className="space-y-6">
+          <PeriodSelector
+            period={purchasesPeriod}
+            onPeriodChange={setPurchasesPeriod}
+            customRange={purchasesCustomRange}
+            onCustomRangeChange={setPurchasesCustomRange}
+            onRefresh={refreshPurchases}
+            loading={purchasesLoading}
+          />
+
+          {/* Summary Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Invertido</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(purchasesData.totalInvested)}</div>
+                <p className="text-xs text-muted-foreground">En el período</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Compras Realizadas</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{purchasesData.totalPurchases}</div>
+                <p className="text-xs text-muted-foreground">Transacciones</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Compra Promedio</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(purchasesData.averagePurchase)}</div>
+                <p className="text-xs text-muted-foreground">Por transacción</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Unidades Compradas</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{purchasesData.totalUnits}</div>
+                <p className="text-xs text-muted-foreground">Total de productos</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <PurchasesOverviewChart data={purchasesData.purchasesByDay} loading={purchasesLoading} />
+            </div>
+            <div>
+              <PurchasesBySupplierChart data={purchasesData.purchasesBySupplier} loading={purchasesLoading} />
+            </div>
+          </div>
+
+          <ProductCostsTable data={purchasesData.productCosts} loading={purchasesLoading} />
         </TabsContent>
 
         {/* Debt Tab */}
