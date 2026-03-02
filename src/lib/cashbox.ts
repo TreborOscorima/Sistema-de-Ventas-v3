@@ -27,27 +27,34 @@ export interface CashboxMovement {
   created_at: string;
 }
 
-export async function getActiveSession(userId: string): Promise<CashboxSession | null> {
-  const { data, error } = await supabase
+export async function getActiveSession(userId: string, branchId?: string): Promise<CashboxSession | null> {
+  let query = supabase
     .from('cashbox_sessions')
     .select('*')
     .eq('user_id', userId)
     .eq('status', 'open')
-    .order('opened_at', { ascending: false })
-    .maybeSingle();
+    .order('opened_at', { ascending: false });
 
+  if (branchId) {
+    query = query.eq('branch_id', branchId);
+  }
+
+  const { data, error } = await query.maybeSingle();
   if (error) throw error;
   return data as CashboxSession | null;
 }
 
-export async function openSession(userId: string, openingAmount: number): Promise<CashboxSession> {
+export async function openSession(userId: string, openingAmount: number, branchId?: string): Promise<CashboxSession> {
+  const insertData: any = {
+    user_id: userId,
+    opening_amount: openingAmount,
+    status: 'open'
+  };
+  if (branchId) insertData.branch_id = branchId;
+
   const { data, error } = await supabase
     .from('cashbox_sessions')
-    .insert({
-      user_id: userId,
-      opening_amount: openingAmount,
-      status: 'open'
-    })
+    .insert(insertData)
     .select()
     .single();
 
@@ -119,14 +126,19 @@ export async function addMovement(
   return data as CashboxMovement;
 }
 
-export async function getSessionHistory(userId: string, limit = 10): Promise<CashboxSession[]> {
-  const { data, error } = await supabase
+export async function getSessionHistory(userId: string, limit = 10, branchId?: string): Promise<CashboxSession[]> {
+  let query = supabase
     .from('cashbox_sessions')
     .select('*')
     .eq('user_id', userId)
     .order('opened_at', { ascending: false })
     .limit(limit);
 
+  if (branchId) {
+    query = query.eq('branch_id', branchId);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return data as CashboxSession[];
 }

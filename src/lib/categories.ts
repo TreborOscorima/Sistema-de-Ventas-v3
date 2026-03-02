@@ -7,17 +7,22 @@ export interface Category {
   created_at: string;
 }
 
-export async function getCategories(): Promise<Category[]> {
-  const { data, error } = await supabase
+export async function getCategories(branchId?: string): Promise<Category[]> {
+  let query = supabase
     .from("categories")
     .select("*")
     .order("name", { ascending: true });
 
+  if (branchId) {
+    query = query.eq("branch_id", branchId);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return data || [];
 }
 
-export async function createCategory(userId: string, name: string): Promise<Category> {
+export async function createCategory(userId: string, name: string, branchId?: string): Promise<Category> {
   const slug = name
     .toLowerCase()
     .normalize("NFD")
@@ -25,9 +30,12 @@ export async function createCategory(userId: string, name: string): Promise<Cate
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
+  const insertData: any = { name, slug, user_id: userId };
+  if (branchId) insertData.branch_id = branchId;
+
   const { data, error } = await supabase
     .from("categories")
-    .insert({ name, slug, user_id: userId })
+    .insert(insertData)
     .select()
     .single();
 
