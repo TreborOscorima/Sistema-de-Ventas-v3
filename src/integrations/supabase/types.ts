@@ -14,6 +14,82 @@ export type Database = {
   }
   public: {
     Tables: {
+      branch_users: {
+        Row: {
+          branch_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          user_id: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          user_id: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_users_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      branches: {
+        Row: {
+          address: string | null
+          company_id: string
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          company_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          company_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branches_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_settings: {
         Row: {
           address: string | null
@@ -120,6 +196,7 @@ export type Database = {
       }
       cashbox_sessions: {
         Row: {
+          branch_id: string | null
           closed_at: string | null
           closing_amount: number | null
           created_at: string
@@ -134,6 +211,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          branch_id?: string | null
           closed_at?: string | null
           closing_amount?: number | null
           created_at?: string
@@ -148,6 +226,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          branch_id?: string | null
           closed_at?: string | null
           closing_amount?: number | null
           created_at?: string
@@ -161,10 +240,19 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cashbox_sessions_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
         Row: {
+          branch_id: string | null
           created_at: string
           id: string
           name: string
@@ -172,6 +260,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           id?: string
           name: string
@@ -179,16 +268,74 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           id?: string
           name?: string
           slug?: string
           user_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "categories_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          receipt_footer: string | null
+          receipt_header: string | null
+          show_logo_on_receipt: boolean
+          show_tax_on_receipt: boolean
+          tax_id: string | null
+          tax_name: string
+          tax_rate: number
+          thermal_paper_size: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          receipt_footer?: string | null
+          receipt_header?: string | null
+          show_logo_on_receipt?: boolean
+          show_tax_on_receipt?: boolean
+          tax_id?: string | null
+          tax_name?: string
+          tax_rate?: number
+          thermal_paper_size?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          receipt_footer?: string | null
+          receipt_header?: string | null
+          show_logo_on_receipt?: boolean
+          show_tax_on_receipt?: boolean
+          tax_id?: string | null
+          tax_name?: string
+          tax_rate?: number
+          thermal_paper_size?: string
+          updated_at?: string
+        }
         Relationships: []
       }
       courts: {
         Row: {
+          branch_id: string | null
           closing_time: string
           created_at: string
           description: string | null
@@ -205,6 +352,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          branch_id?: string | null
           closing_time?: string
           created_at?: string
           description?: string | null
@@ -221,6 +369,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          branch_id?: string | null
           closing_time?: string
           created_at?: string
           description?: string | null
@@ -236,7 +385,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "courts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customer_balance_movements: {
         Row: {
@@ -286,6 +443,7 @@ export type Database = {
         Row: {
           address: string | null
           balance: number
+          branch_id: string | null
           created_at: string
           email: string | null
           id: string
@@ -298,6 +456,7 @@ export type Database = {
         Insert: {
           address?: string | null
           balance?: number
+          branch_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -310,6 +469,7 @@ export type Database = {
         Update: {
           address?: string | null
           balance?: number
+          branch_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -319,10 +479,19 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
+          branch_id: string | null
           category_id: string | null
           created_at: string
           id: string
@@ -334,6 +503,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          branch_id?: string | null
           category_id?: string | null
           created_at?: string
           id?: string
@@ -345,6 +515,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          branch_id?: string | null
           category_id?: string | null
           created_at?: string
           id?: string
@@ -356,6 +527,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "products_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_category_id_fkey"
             columns: ["category_id"]
@@ -442,6 +620,7 @@ export type Database = {
       }
       purchases: {
         Row: {
+          branch_id: string | null
           created_at: string
           document_number: string | null
           document_type: string
@@ -457,6 +636,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           document_number?: string | null
           document_type?: string
@@ -472,6 +652,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           document_number?: string | null
           document_type?: string
@@ -488,6 +669,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "purchases_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "purchases_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
@@ -498,6 +686,7 @@ export type Database = {
       }
       reservations: {
         Row: {
+          branch_id: string | null
           court_id: string
           created_at: string
           customer_email: string | null
@@ -514,6 +703,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          branch_id?: string | null
           court_id: string
           created_at?: string
           customer_email?: string | null
@@ -530,6 +720,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          branch_id?: string | null
           court_id?: string
           created_at?: string
           customer_email?: string | null
@@ -546,6 +737,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reservations_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reservations_court_id_fkey"
             columns: ["court_id"]
@@ -605,6 +803,7 @@ export type Database = {
       }
       sales: {
         Row: {
+          branch_id: string | null
           created_at: string
           customer_id: string | null
           customer_name: string | null
@@ -618,6 +817,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
@@ -631,6 +831,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
@@ -644,6 +845,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_customer_id_fkey"
             columns: ["customer_id"]
@@ -663,6 +871,7 @@ export type Database = {
       suppliers: {
         Row: {
           address: string | null
+          branch_id: string | null
           created_at: string
           email: string | null
           id: string
@@ -676,6 +885,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          branch_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -689,6 +899,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          branch_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -700,17 +911,75 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      user_belongs_to_branch: {
+        Args: { _branch_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_belongs_to_company: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "owner" | "admin" | "cashier"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -837,6 +1106,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["owner", "admin", "cashier"],
+    },
   },
 } as const
