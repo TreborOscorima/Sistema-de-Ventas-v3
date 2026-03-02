@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { useToast } from '@/hooks/use-toast';
 import {
   CashboxSession,
@@ -15,6 +16,7 @@ import {
 
 export function useCashbox() {
   const { user } = useAuth();
+  const { activeBranch } = useCompany();
   const { toast } = useToast();
   
   const [activeSession, setActiveSession] = useState<CashboxSession | null>(null);
@@ -30,7 +32,7 @@ export function useCashbox() {
     setError(null);
 
     try {
-      const session = await getActiveSession(user.id);
+      const session = await getActiveSession(user.id, activeBranch?.id);
       setActiveSession(session);
 
       if (session) {
@@ -40,7 +42,7 @@ export function useCashbox() {
         setMovements([]);
       }
 
-      const history = await getSessionHistory(user.id);
+      const history = await getSessionHistory(user.id, 10, activeBranch?.id);
       setSessionHistory(history);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error al cargar datos';
@@ -53,7 +55,7 @@ export function useCashbox() {
     } finally {
       setLoading(false);
     }
-  }, [user, toast]);
+  }, [user, toast, activeBranch?.id]);
 
   useEffect(() => {
     refresh();
@@ -63,7 +65,7 @@ export function useCashbox() {
     if (!user) return;
     
     try {
-      const session = await openSession(user.id, openingAmount);
+      const session = await openSession(user.id, openingAmount, activeBranch?.id);
       setActiveSession(session);
       setMovements([]);
       toast({

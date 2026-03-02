@@ -51,23 +51,29 @@ export interface CartItem {
   quantity: number;
 }
 
-export async function getCategories(): Promise<Category[]> {
-  const { data, error } = await supabase
+export async function getCategories(branchId?: string): Promise<Category[]> {
+  let query = supabase
     .from('categories')
     .select('*')
     .order('name');
 
+  if (branchId) query = query.eq('branch_id', branchId);
+
+  const { data, error } = await query;
   if (error) throw error;
   return data as Category[];
 }
 
-export async function getProducts(): Promise<Product[]> {
-  const { data, error } = await supabase
+export async function getProducts(branchId?: string): Promise<Product[]> {
+  let query = supabase
     .from('products')
     .select('*, category:categories(*)')
     .eq('is_active', true)
     .order('name');
 
+  if (branchId) query = query.eq('branch_id', branchId);
+
+  const { data, error } = await query;
   if (error) throw error;
   return data as unknown as Product[];
 }
@@ -79,26 +85,29 @@ export async function createSale(
   paymentMethod: string,
   customerName?: string,
   customerId?: string,
-  isCredit?: boolean
+  isCredit?: boolean,
+  branchId?: string
 ): Promise<Sale> {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.18;
   const total = subtotal + tax;
 
-  // Create the sale
+  const insertData: any = {
+    user_id: userId,
+    session_id: sessionId,
+    customer_name: customerName || null,
+    customer_id: customerId || null,
+    payment_method: paymentMethod,
+    subtotal,
+    tax,
+    total,
+    status: 'completed'
+  };
+  if (branchId) insertData.branch_id = branchId;
+
   const { data: sale, error: saleError } = await supabase
     .from('sales')
-    .insert({
-      user_id: userId,
-      session_id: sessionId,
-      customer_name: customerName || null,
-      customer_id: customerId || null,
-      payment_method: paymentMethod,
-      subtotal,
-      tax,
-      total,
-      status: 'completed'
-    })
+    .insert(insertData)
     .select()
     .single();
 
@@ -151,7 +160,6 @@ export async function createSale(
         .update({ balance: newBalance })
         .eq('id', customerId);
       
-      // Record the balance movement
       await createBalanceMovement(
         userId,
         customerId,
@@ -167,14 +175,17 @@ export async function createSale(
   return sale as Sale;
 }
 
-export async function getSales(userId: string, limit = 50): Promise<Sale[]> {
-  const { data, error } = await supabase
+export async function getSales(userId: string, limit = 50, branchId?: string): Promise<Sale[]> {
+  let query = supabase
     .from('sales')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit);
 
+  if (branchId) query = query.eq('branch_id', branchId);
+
+  const { data, error } = await query;
   if (error) throw error;
   return data as Sale[];
 }

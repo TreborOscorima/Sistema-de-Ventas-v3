@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -29,6 +30,7 @@ export interface CashboxReportData {
 
 export function useCashboxReports() {
   const { user } = useAuth();
+  const { activeBranch } = useCompany();
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodType>('week');
   const [customRange, setCustomRange] = useState<DateRange>({
@@ -73,15 +75,16 @@ export function useCashboxReports() {
       setLoading(true);
 
       // Fetch cashbox sessions within date range
-      const { data: sessions, error: sessionsError } = await supabase
+      let sessionsQuery = supabase
         .from('cashbox_sessions')
         .select('*')
         .eq('user_id', user.id)
         .gte('opened_at', dateRange.from.toISOString())
         .lte('opened_at', dateRange.to.toISOString())
         .order('opened_at', { ascending: false });
+      if (activeBranch?.id) sessionsQuery = sessionsQuery.eq('branch_id', activeBranch.id);
 
-      if (sessionsError) throw sessionsError;
+      const { data: sessions, error: sessionsError } = await sessionsQuery;
 
       // Fetch movements for these sessions
       const sessionIds = sessions?.map(s => s.id) || [];
@@ -173,7 +176,7 @@ export function useCashboxReports() {
     } finally {
       setLoading(false);
     }
-  }, [user, dateRange]);
+  }, [user, dateRange, activeBranch?.id]);
 
   useEffect(() => {
     loadReportData();

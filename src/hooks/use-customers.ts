@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { useToast } from '@/hooks/use-toast';
 import {
   Customer,
@@ -10,8 +11,10 @@ import {
   getCustomerSales
 } from '@/lib/customers';
 import { createBalanceMovement } from '@/lib/customer-movements';
+
 export function useCustomers() {
   const { user } = useAuth();
+  const { activeBranch } = useCompany();
   const { toast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +25,7 @@ export function useCustomers() {
     
     try {
       setLoading(true);
-      const data = await getCustomers(user.id);
+      const data = await getCustomers(user.id, activeBranch?.id);
       setCustomers(data);
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -34,7 +37,7 @@ export function useCustomers() {
     } finally {
       setLoading(false);
     }
-  }, [user, toast]);
+  }, [user, toast, activeBranch?.id]);
 
   useEffect(() => {
     fetchCustomers();
@@ -58,7 +61,7 @@ export function useCustomers() {
         address: customerData.address || null,
         notes: customerData.notes || null,
         balance: customerData.balance || 0
-      });
+      }, activeBranch?.id);
       
       setCustomers(prev => [...prev, newCustomer].sort((a, b) => a.name.localeCompare(b.name)));
       toast({
@@ -132,7 +135,6 @@ export function useCustomers() {
     const updated = await editCustomer(customerId, { balance: newBalance });
     
     if (updated) {
-      // Determine movement type and description
       const isPayment = customDescription?.toLowerCase().includes('pago recibido');
       const movementType = isPayment ? 'payment' : (isDebit ? 'adjustment_debit' : 'adjustment_credit');
       const description = customDescription || (isDebit 

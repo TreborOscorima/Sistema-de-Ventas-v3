@@ -18,13 +18,18 @@ export interface CustomerWithSales extends Customer {
   last_purchase_date: string | null;
 }
 
-export async function getCustomers(userId: string): Promise<Customer[]> {
-  const { data, error } = await supabase
+export async function getCustomers(userId: string, branchId?: string): Promise<Customer[]> {
+  let query = supabase
     .from('customers')
     .select('*')
     .eq('user_id', userId)
     .order('name', { ascending: true });
 
+  if (branchId) {
+    query = query.eq('branch_id', branchId);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return data || [];
 }
@@ -42,19 +47,23 @@ export async function getCustomerById(customerId: string): Promise<Customer | nu
 
 export async function createCustomer(
   userId: string,
-  customer: Omit<Customer, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+  customer: Omit<Customer, 'id' | 'user_id' | 'created_at' | 'updated_at'>,
+  branchId?: string
 ): Promise<Customer> {
+  const insertData: any = {
+    user_id: userId,
+    name: customer.name,
+    email: customer.email,
+    phone: customer.phone,
+    address: customer.address,
+    notes: customer.notes,
+    balance: customer.balance
+  };
+  if (branchId) insertData.branch_id = branchId;
+
   const { data, error } = await supabase
     .from('customers')
-    .insert({
-      user_id: userId,
-      name: customer.name,
-      email: customer.email,
-      phone: customer.phone,
-      address: customer.address,
-      notes: customer.notes,
-      balance: customer.balance
-    })
+    .insert(insertData)
     .select()
     .single();
 

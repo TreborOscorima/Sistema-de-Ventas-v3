@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCompany } from "@/contexts/CompanyContext";
 
 export interface PurchaseItem {
   id: string;
@@ -57,18 +58,21 @@ export function usePurchases() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const { activeBranch } = useCompany();
 
   const loadPurchases = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from("purchases")
-        .select(`
-          *,
-          supplier:suppliers(id, name, ruc)
-        `)
+        .select(`*, supplier:suppliers(id, name, ruc)`)
         .order("purchase_date", { ascending: false });
 
+      if (activeBranch?.id) {
+        query = query.eq("branch_id", activeBranch.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       setPurchases((data as Purchase[]) || []);
     } catch (error) {
@@ -81,7 +85,7 @@ export function usePurchases() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, activeBranch?.id]);
 
   useEffect(() => {
     loadPurchases();
@@ -91,10 +95,7 @@ export function usePurchases() {
     try {
       const { data: purchase, error: purchaseError } = await supabase
         .from("purchases")
-        .select(`
-          *,
-          supplier:suppliers(id, name, ruc)
-        `)
+        .select(`*, supplier:suppliers(id, name, ruc)`)
         .eq("id", purchaseId)
         .single();
 
@@ -120,31 +121,31 @@ export function usePurchases() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
-      // Calculate totals
       const subtotal = data.items.reduce((sum, item) => sum + (item.quantity * item.unit_cost), 0);
       const tax = data.tax || 0;
       const total = subtotal + tax;
 
-      // Create purchase
+      const insertData: any = {
+        user_id: user.id,
+        supplier_id: data.supplier_id || null,
+        document_type: data.document_type,
+        document_number: data.document_number || null,
+        purchase_date: data.purchase_date,
+        subtotal,
+        tax,
+        total,
+        notes: data.notes || null,
+      };
+      if (activeBranch?.id) insertData.branch_id = activeBranch.id;
+
       const { data: purchase, error: purchaseError } = await supabase
         .from("purchases")
-        .insert({
-          user_id: user.id,
-          supplier_id: data.supplier_id || null,
-          document_type: data.document_type,
-          document_number: data.document_number || null,
-          purchase_date: data.purchase_date,
-          subtotal,
-          tax,
-          total,
-          notes: data.notes || null,
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (purchaseError) throw purchaseError;
 
-      // Create purchase items
       const purchaseItems = data.items.map(item => ({
         purchase_id: purchase.id,
         product_id: item.product_id,
@@ -160,7 +161,6 @@ export function usePurchases() {
 
       if (itemsError) throw itemsError;
 
-      // Update product stock
       for (const item of data.items) {
         const { data: product } = await supabase
           .from("products")
@@ -199,13 +199,11 @@ export function usePurchases() {
     try {
       setSaving(true);
       
-      // Get items to revert stock
       const { data: items } = await supabase
         .from("purchase_items")
         .select("product_id, quantity")
         .eq("purchase_id", id);
 
-      // Revert stock for each item
       if (items) {
         for (const item of items) {
           const { data: product } = await supabase
@@ -223,7 +221,6 @@ export function usePurchases() {
         }
       }
 
-      // Delete purchase (items will cascade)
       const { error } = await supabase
         .from("purchases")
         .delete()

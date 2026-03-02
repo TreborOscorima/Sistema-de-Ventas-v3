@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCompany } from "@/contexts/CompanyContext";
 
 export interface Product {
   id: string;
@@ -31,18 +32,21 @@ export function useProducts() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const { activeBranch } = useCompany();
 
   const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from("products")
-        .select(`
-          *,
-          category:categories(id, name, slug)
-        `)
+        .select(`*, category:categories(id, name, slug)`)
         .order("name", { ascending: true });
 
+      if (activeBranch?.id) {
+        query = query.eq("branch_id", activeBranch.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       setProducts(data || []);
     } catch (error) {
@@ -55,7 +59,7 @@ export function useProducts() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, activeBranch?.id]);
 
   useEffect(() => {
     loadProducts();
@@ -67,20 +71,20 @@ export function useProducts() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuario no autenticado');
 
+      const insertData: any = {
+        name: productData.name,
+        price: productData.price,
+        stock: productData.stock,
+        category_id: productData.category_id,
+        is_active: productData.is_active ?? true,
+        user_id: user.id,
+      };
+      if (activeBranch?.id) insertData.branch_id = activeBranch.id;
+
       const { data, error } = await supabase
         .from("products")
-        .insert({
-          name: productData.name,
-          price: productData.price,
-          stock: productData.stock,
-          category_id: productData.category_id,
-          is_active: productData.is_active ?? true,
-          user_id: user.id,
-        })
-        .select(`
-          *,
-          category:categories(id, name, slug)
-        `)
+        .insert(insertData)
+        .select(`*, category:categories(id, name, slug)`)
         .single();
 
       if (error) throw error;

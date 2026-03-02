@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subWeeks, subMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -37,6 +38,7 @@ function calculateChange(current: number, previous: number): number {
 
 export function useComparativeReports() {
   const { user } = useAuth();
+  const { activeBranch } = useCompany();
   const [loading, setLoading] = useState(true);
   const [comparisonType, setComparisonType] = useState<ComparisonType>('week');
 
@@ -220,7 +222,7 @@ export function useComparativeReports() {
     } finally {
       setLoading(false);
     }
-  }, [user, comparisonType]);
+  }, [user, comparisonType, activeBranch?.id]);
 
   useEffect(() => {
     loadReportData();

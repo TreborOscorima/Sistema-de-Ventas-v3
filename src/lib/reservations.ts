@@ -34,11 +34,14 @@ export interface Reservation {
   court?: Court;
 }
 
-export async function getCourts(includeInactive = false): Promise<Court[]> {
+export async function getCourts(includeInactive = false, branchId?: string): Promise<Court[]> {
   let query = supabase.from('courts').select('*').order('name');
   
   if (!includeInactive) {
     query = query.eq('is_active', true);
+  }
+  if (branchId) {
+    query = query.eq('branch_id', branchId);
   }
 
   const { data, error } = await query;
@@ -84,17 +87,20 @@ export async function createCourt(court: {
   image_url?: string;
   opening_time?: string;
   closing_time?: string;
-}): Promise<Court> {
+}, branchId?: string): Promise<Court> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario no autenticado');
 
+  const insertData: any = {
+    ...court,
+    user_id: user.id,
+    is_active: court.is_active ?? true
+  };
+  if (branchId) insertData.branch_id = branchId;
+
   const { data, error } = await supabase
     .from('courts')
-    .insert({
-      ...court,
-      user_id: user.id,
-      is_active: court.is_active ?? true
-    })
+    .insert(insertData)
     .select()
     .single();
 
@@ -126,33 +132,32 @@ export async function deleteCourt(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function getReservations(startDate?: string, endDate?: string): Promise<Reservation[]> {
+export async function getReservations(startDate?: string, endDate?: string, branchId?: string): Promise<Reservation[]> {
   let query = supabase
     .from('reservations')
     .select('*, court:courts(*)')
     .order('reservation_date', { ascending: true })
     .order('start_time', { ascending: true });
 
-  if (startDate) {
-    query = query.gte('reservation_date', startDate);
-  }
-  if (endDate) {
-    query = query.lte('reservation_date', endDate);
-  }
+  if (startDate) query = query.gte('reservation_date', startDate);
+  if (endDate) query = query.lte('reservation_date', endDate);
+  if (branchId) query = query.eq('branch_id', branchId);
 
   const { data, error } = await query;
-
   if (error) throw error;
   return (data || []) as unknown as Reservation[];
 }
 
-export async function getReservationsByDate(date: string): Promise<Reservation[]> {
-  const { data, error } = await supabase
+export async function getReservationsByDate(date: string, branchId?: string): Promise<Reservation[]> {
+  let query = supabase
     .from('reservations')
     .select('*, court:courts(*)')
     .eq('reservation_date', date)
     .order('start_time', { ascending: true });
 
+  if (branchId) query = query.eq('branch_id', branchId);
+
+  const { data, error } = await query;
   if (error) throw error;
   return (data || []) as unknown as Reservation[];
 }
@@ -168,17 +173,20 @@ export async function createReservation(reservation: {
   total_amount: number;
   notes?: string;
   status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-}): Promise<Reservation> {
+}, branchId?: string): Promise<Reservation> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario no autenticado');
 
+  const insertData: any = {
+    ...reservation,
+    user_id: user.id,
+    status: reservation.status || 'pending'
+  };
+  if (branchId) insertData.branch_id = branchId;
+
   const { data, error } = await supabase
     .from('reservations')
-    .insert({
-      ...reservation,
-      user_id: user.id,
-      status: reservation.status || 'pending'
-    })
+    .insert(insertData)
     .select('*, court:courts(*)')
     .single();
 
@@ -232,7 +240,6 @@ export function calculateTotal(
   nightPricePerHour?: number | null,
   nightStartTime?: string | null
 ): number {
-  // If no night pricing, use simple calculation
   if (!nightPricePerHour || !nightStartTime) {
     const hours = calculateDuration(startTime, endTime);
     return pricePerHour * hours;
@@ -247,18 +254,14 @@ export function calculateTotal(
   const endMinutes = endH * 60 + endM;
   const nightMinutes = nightH * 60 + nightM;
 
-  // Calculate regular and night hours
   let regularMinutes = 0;
   let nightMinutesCount = 0;
 
   if (endMinutes <= nightMinutes) {
-    // Entire reservation is before night hours
     regularMinutes = endMinutes - startMinutes;
   } else if (startMinutes >= nightMinutes) {
-    // Entire reservation is during night hours
     nightMinutesCount = endMinutes - startMinutes;
   } else {
-    // Reservation spans both periods
     regularMinutes = nightMinutes - startMinutes;
     nightMinutesCount = endMinutes - nightMinutes;
   }
@@ -288,17 +291,14 @@ export async function checkCourtAvailability(
   }
 
   const { data, error } = await query;
-
   if (error) throw error;
 
   const reservations = (data || []) as unknown as Reservation[];
 
-  // Check for time overlap
   for (const reservation of reservations) {
     const resStart = reservation.start_time.slice(0, 5);
     const resEnd = reservation.end_time.slice(0, 5);
 
-    // Check if times overlap
     if (
       (startTime >= resStart && startTime < resEnd) ||
       (endTime > resStart && endTime <= resEnd) ||

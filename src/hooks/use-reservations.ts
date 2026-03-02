@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useCompany } from '@/contexts/CompanyContext';
 import { 
   Court, 
   Reservation, 
@@ -20,22 +21,23 @@ export function useReservations() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const { activeBranch } = useCompany();
 
   const loadCourts = useCallback(async (includeInactive = false) => {
     try {
-      const data = await getCourts(includeInactive);
+      const data = await getCourts(includeInactive, activeBranch?.id);
       setCourts(data);
     } catch (error) {
       console.error('Error loading courts:', error);
       toast.error('Error al cargar las canchas');
     }
-  }, []);
+  }, [activeBranch?.id]);
 
   const loadReservations = useCallback(async (date?: Date) => {
     try {
       setLoading(true);
       const dateStr = (date || selectedDate).toISOString().split('T')[0];
-      const data = await getReservationsByDate(dateStr);
+      const data = await getReservationsByDate(dateStr, activeBranch?.id);
       setReservations(data);
     } catch (error) {
       console.error('Error loading reservations:', error);
@@ -43,12 +45,12 @@ export function useReservations() {
     } finally {
       setLoading(false);
     }
-  }, [selectedDate]);
+  }, [selectedDate, activeBranch?.id]);
 
   const loadAllReservations = useCallback(async (startDate?: string, endDate?: string) => {
     try {
       setLoading(true);
-      const data = await getReservations(startDate, endDate);
+      const data = await getReservations(startDate, endDate, activeBranch?.id);
       setReservations(data);
     } catch (error) {
       console.error('Error loading reservations:', error);
@@ -56,7 +58,7 @@ export function useReservations() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeBranch?.id]);
 
   useEffect(() => {
     loadCourts();
@@ -65,7 +67,7 @@ export function useReservations() {
 
   const addReservation = async (reservation: Parameters<typeof createReservation>[0]) => {
     try {
-      await createReservation(reservation);
+      await createReservation(reservation, activeBranch?.id);
       toast.success('Reserva creada exitosamente');
       await loadReservations();
     } catch (error) {
@@ -124,7 +126,7 @@ export function useReservations() {
 
   const addCourt = async (court: Parameters<typeof createCourt>[0]) => {
     try {
-      await createCourt(court);
+      await createCourt(court, activeBranch?.id);
       toast.success('Cancha creada exitosamente');
       await loadCourts(true);
     } catch (error) {

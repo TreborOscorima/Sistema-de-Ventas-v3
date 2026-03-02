@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { getSales, getSaleItems, Sale, SaleItem } from '@/lib/sales';
 import { useToast } from '@/hooks/use-toast';
-import { format, startOfDay, endOfDay, parseISO } from 'date-fns';
+import { startOfDay, endOfDay, parseISO } from 'date-fns';
 
 interface UseSalesOptions {
   startDate?: Date;
@@ -13,6 +14,7 @@ interface UseSalesOptions {
 
 export function useSales(options: UseSalesOptions = {}) {
   const { user } = useAuth();
+  const { activeBranch } = useCompany();
   const { toast } = useToast();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,33 +24,24 @@ export function useSales(options: UseSalesOptions = {}) {
 
     try {
       setLoading(true);
-      const allSales = await getSales(user.id, 500);
+      const allSales = await getSales(user.id, 500, activeBranch?.id);
       
       let filtered = allSales;
 
-      // Filter by date range
       if (options.startDate) {
         const start = startOfDay(options.startDate);
-        filtered = filtered.filter(sale => {
-          const saleDate = parseISO(sale.created_at);
-          return saleDate >= start;
-        });
+        filtered = filtered.filter(sale => parseISO(sale.created_at) >= start);
       }
 
       if (options.endDate) {
         const end = endOfDay(options.endDate);
-        filtered = filtered.filter(sale => {
-          const saleDate = parseISO(sale.created_at);
-          return saleDate <= end;
-        });
+        filtered = filtered.filter(sale => parseISO(sale.created_at) <= end);
       }
 
-      // Filter by payment method
       if (options.paymentMethod && options.paymentMethod !== 'all') {
         filtered = filtered.filter(sale => sale.payment_method === options.paymentMethod);
       }
 
-      // Filter by status
       if (options.status && options.status !== 'all') {
         filtered = filtered.filter(sale => sale.status === options.status);
       }
@@ -64,7 +57,7 @@ export function useSales(options: UseSalesOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [user, options.startDate, options.endDate, options.paymentMethod, options.status, toast]);
+  }, [user, options.startDate, options.endDate, options.paymentMethod, options.status, toast, activeBranch?.id]);
 
   useEffect(() => {
     loadSales();
@@ -84,7 +77,6 @@ export function useSales(options: UseSalesOptions = {}) {
     }
   };
 
-  // Calculate stats
   const completedSales = sales.filter(s => s.status === 'completed');
   const totalSales = completedSales.reduce((sum, s) => sum + s.total, 0);
   const totalTransactions = completedSales.length;

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -21,6 +22,7 @@ export interface CategoryReportData {
 
 export function useCategoryReports() {
   const { user } = useAuth();
+  const { activeBranch } = useCompany();
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodType>('week');
   const [customRange, setCustomRange] = useState<DateRange>({
@@ -212,7 +214,7 @@ export function useCategoryReports() {
     } finally {
       setLoading(false);
     }
-  }, [user, dateRange]);
+  }, [user, dateRange, activeBranch?.id]);
 
   useEffect(() => {
     loadReportData();

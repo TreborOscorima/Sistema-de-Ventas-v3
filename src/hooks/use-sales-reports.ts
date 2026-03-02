@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, format, parseISO, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -25,6 +26,7 @@ export type PeriodType = 'today' | 'yesterday' | 'week' | 'month' | 'custom';
 
 export function useSalesReports() {
   const { user } = useAuth();
+  const { activeBranch } = useCompany();
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodType>('week');
   const [customRange, setCustomRange] = useState<DateRange>({
@@ -70,15 +72,16 @@ export function useSalesReports() {
       setLoading(true);
 
       // Fetch sales within date range
-      const { data: sales, error: salesError } = await supabase
+      let salesQuery = supabase
         .from('sales')
         .select('*')
         .eq('user_id', user.id)
         .gte('created_at', dateRange.from.toISOString())
         .lte('created_at', dateRange.to.toISOString())
         .order('created_at', { ascending: true });
+      if (activeBranch?.id) salesQuery = salesQuery.eq('branch_id', activeBranch.id);
 
-      if (salesError) throw salesError;
+      const { data: sales, error: salesError } = await salesQuery;
 
       // Fetch sale items for the period
       const saleIds = sales?.map(s => s.id) || [];
@@ -174,7 +177,7 @@ export function useSalesReports() {
     } finally {
       setLoading(false);
     }
-  }, [user, dateRange]);
+  }, [user, dateRange, activeBranch?.id]);
 
   useEffect(() => {
     loadReportData();

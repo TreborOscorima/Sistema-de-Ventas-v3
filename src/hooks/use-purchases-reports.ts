@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, format, parseISO, eachDayOfInterval } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -17,6 +18,7 @@ export interface PurchasesReportData {
 
 export function usePurchasesReports() {
   const { user } = useAuth();
+  const { activeBranch } = useCompany();
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodType>('month');
   const [customRange, setCustomRange] = useState<DateRange>({
@@ -58,7 +60,7 @@ export function usePurchasesReports() {
     try {
       setLoading(true);
 
-      const { data: purchases, error: pErr } = await supabase
+      let pQuery = supabase
         .from('purchases')
         .select('*, suppliers(name)')
         .eq('user_id', user.id)
@@ -66,8 +68,9 @@ export function usePurchasesReports() {
         .gte('purchase_date', format(dateRange.from, 'yyyy-MM-dd'))
         .lte('purchase_date', format(dateRange.to, 'yyyy-MM-dd'))
         .order('purchase_date', { ascending: true });
+      if (activeBranch?.id) pQuery = pQuery.eq('branch_id', activeBranch.id);
 
-      if (pErr) throw pErr;
+      const { data: purchases, error: pErr } = await pQuery;
 
       const purchaseIds = purchases?.map(p => p.id) || [];
       let items: any[] = [];
@@ -134,7 +137,7 @@ export function usePurchasesReports() {
     } finally {
       setLoading(false);
     }
-  }, [user, dateRange]);
+  }, [user, dateRange, activeBranch?.id]);
 
   useEffect(() => {
     loadReportData();

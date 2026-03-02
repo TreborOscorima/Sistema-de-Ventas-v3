@@ -23,12 +23,21 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompany } from "@/contexts/CompanyContext";
 import { GlobalSearch } from "./GlobalSearch";
+import { BranchSelector } from "./BranchSelector";
 
 export function TopBar() {
   const { user, signOut } = useAuth();
+  const { userRole, company } = useCompany();
   const navigate = useNavigate();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  const roleLabels: Record<string, string> = {
+    owner: 'Dueño',
+    admin: 'Administrador',
+    cashier: 'Cajero'
+  };
 
   const getInitials = (email: string | undefined) => {
     if (!email) return 'U';
@@ -44,8 +53,11 @@ export function TopBar() {
   return (
     <>
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/80 px-6 backdrop-blur-md">
-        {/* Search */}
-        <GlobalSearch />
+        {/* Search + Branch */}
+        <div className="flex items-center gap-4">
+          <GlobalSearch />
+          <BranchSelector />
+        </div>
 
         {/* Actions */}
         <div className="flex items-center gap-4">
@@ -94,7 +106,7 @@ export function TopBar() {
                 </Avatar>
                 <div className="hidden text-left md:block">
                   <p className="text-sm font-medium">{user?.email?.split('@')[0] || 'Usuario'}</p>
-                  <p className="text-xs text-muted-foreground">Usuario</p>
+                  <p className="text-xs text-muted-foreground">{userRole ? roleLabels[userRole] : 'Usuario'}</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, format, parseISO, eachDayOfInterval } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -21,6 +22,7 @@ export interface ReservationsReportData {
 
 export function useReservationsReports() {
   const { user } = useAuth();
+  const { activeBranch } = useCompany();
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<PeriodType>('week');
   const [customRange, setCustomRange] = useState<DateRange>({
@@ -68,15 +70,16 @@ export function useReservationsReports() {
       setLoading(true);
 
       // Fetch reservations within date range
-      const { data: reservations, error: reservationsError } = await supabase
+      let resQuery = supabase
         .from('reservations')
         .select('*, court:courts(*)')
         .eq('user_id', user.id)
         .gte('reservation_date', format(dateRange.from, 'yyyy-MM-dd'))
         .lte('reservation_date', format(dateRange.to, 'yyyy-MM-dd'))
         .order('reservation_date', { ascending: true });
+      if (activeBranch?.id) resQuery = resQuery.eq('branch_id', activeBranch.id);
 
-      if (reservationsError) throw reservationsError;
+      const { data: reservations, error: reservationsError } = await resQuery;
 
       // Fetch courts for occupancy calculation
       const { data: courts, error: courtsError } = await supabase
@@ -190,7 +193,7 @@ export function useReservationsReports() {
     } finally {
       setLoading(false);
     }
-  }, [user, dateRange]);
+  }, [user, dateRange, activeBranch?.id]);
 
   useEffect(() => {
     loadReportData();

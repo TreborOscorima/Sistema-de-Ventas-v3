@@ -9,6 +9,7 @@ import {
 } from "@/lib/categories";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompany } from "@/contexts/CompanyContext";
 
 interface CategoryWithCount extends Category {
   productCount: number;
@@ -20,13 +21,13 @@ export function useCategories() {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { activeBranch } = useCompany();
 
   const loadCategories = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getCategories();
+      const data = await getCategories(activeBranch?.id);
       
-      // Get product counts for each category
       const categoriesWithCounts = await Promise.all(
         data.map(async (category) => {
           const productCount = await getCategoryProductCount(category.id);
@@ -45,7 +46,7 @@ export function useCategories() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, activeBranch?.id]);
 
   useEffect(() => {
     loadCategories();
@@ -55,7 +56,7 @@ export function useCategories() {
     if (!user) return false;
     try {
       setSaving(true);
-      await createCategory(user.id, name);
+      await createCategory(user.id, name, activeBranch?.id);
       await loadCategories();
       toast({
         title: "Categoría creada",
