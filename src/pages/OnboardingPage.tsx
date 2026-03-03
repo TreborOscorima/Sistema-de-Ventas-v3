@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Building2, MapPin, Store, ArrowRight, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function OnboardingPage() {
-  const { createCompanyAndBranch } = useCompany();
+  const { createCompanyAndBranch, needsOnboarding, loading } = useCompany();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
@@ -17,6 +17,13 @@ export default function OnboardingPage() {
   const [branchName, setBranchName] = useState("Principal");
   const [branchAddress, setBranchAddress] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Redirect if user already has a company
+  useEffect(() => {
+    if (!loading && !needsOnboarding) {
+      navigate("/", { replace: true });
+    }
+  }, [loading, needsOnboarding, navigate]);
 
   const handleSubmit = async () => {
     if (!companyName.trim() || !branchName.trim()) return;
