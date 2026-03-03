@@ -165,48 +165,13 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const createCompanyAndBranch = async (companyName: string, branchName: string, branchAddress?: string) => {
     if (!user) throw new Error('No user logged in');
 
-    // 1. Create company
-    const { data: newCompany, error: companyError } = await supabase
-      .from('companies')
-      .insert({ name: companyName })
-      .select()
-      .single();
+    const { error } = await supabase.rpc('onboard_company', {
+      _company_name: companyName,
+      _branch_name: branchName,
+      _branch_address: branchAddress || null
+    });
 
-    if (companyError) throw companyError;
-
-    // 2. Assign owner role
-    const { error: roleError } = await supabase
-      .from('user_roles')
-      .insert({
-        user_id: user.id,
-        company_id: newCompany.id,
-        role: 'owner'
-      });
-
-    if (roleError) throw roleError;
-
-    // 3. Create first branch
-    const { data: newBranch, error: branchError } = await supabase
-      .from('branches')
-      .insert({
-        company_id: newCompany.id,
-        name: branchName,
-        address: branchAddress || null
-      })
-      .select()
-      .single();
-
-    if (branchError) throw branchError;
-
-    // 4. Assign owner to the branch
-    const { error: branchUserError } = await supabase
-      .from('branch_users')
-      .insert({
-        user_id: user.id,
-        branch_id: newBranch.id
-      });
-
-    if (branchUserError) throw branchUserError;
+    if (error) throw error;
 
     // Reload
     await loadCompanyData();
