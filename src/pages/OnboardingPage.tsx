@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function OnboardingPage() {
   const { createCompanyAndBranch } = useCompany();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [companyName, setCompanyName] = useState("");
@@ -26,6 +28,7 @@ export default function OnboardingPage() {
         title: "¡Bienvenido!",
         description: "Tu empresa y sucursal han sido creadas correctamente",
       });
+      navigate("/", { replace: true });
     } catch (error: any) {
       console.error("Error creating company:", error);
       toast({

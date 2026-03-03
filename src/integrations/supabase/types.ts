@@ -969,6 +969,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      onboard_company: {
+        Args: {
+          _branch_address?: string
+          _branch_name: string
+          _company_name: string
+        }
+        Returns: Json
+      }
       user_belongs_to_branch: {
         Args: { _branch_id: string; _user_id: string }
         Returns: boolean
