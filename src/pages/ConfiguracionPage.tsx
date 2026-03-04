@@ -5,10 +5,13 @@ import { BusinessSettings } from "@/components/settings/BusinessSettings";
 import { TaxSettings } from "@/components/settings/TaxSettings";
 import { ReceiptSettings } from "@/components/settings/ReceiptSettings";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
-import { User, Building2, Percent, Receipt, Palette, Settings } from "lucide-react";
+import { BranchManagement } from "@/components/settings/BranchManagement";
+import { useCompany } from "@/contexts/CompanyContext";
+import { User, Building2, Percent, Receipt, Palette, Settings, GitBranch } from "lucide-react";
 
 const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
   const [activeTab, setActiveTab] = useState("profile");
+  const { userRole } = useCompany();
 
   return (
     <div ref={ref} className="space-y-6">
@@ -23,7 +26,7 @@ const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto gap-2 bg-transparent p-0">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 h-auto gap-2 bg-transparent p-0">
           <TabsTrigger 
             value="profile" 
             className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -59,6 +62,15 @@ const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
             <Palette className="h-4 w-4" />
             <span className="hidden sm:inline">Apariencia</span>
           </TabsTrigger>
+          {userRole === "owner" && (
+            <TabsTrigger 
+              value="branches"
+              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              <GitBranch className="h-4 w-4" />
+              <span className="hidden sm:inline">Sucursales</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="profile" className="mt-6">
@@ -80,6 +92,12 @@ const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
         <TabsContent value="appearance" className="mt-6">
           <AppearanceSettings />
         </TabsContent>
+
+        {userRole === "owner" && (
+          <TabsContent value="branches" className="mt-6">
+            <BranchManagement />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
