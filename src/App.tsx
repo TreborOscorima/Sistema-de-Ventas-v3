@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CompanyProvider } from "@/contexts/CompanyContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { CompanyRoute } from "@/components/CompanyRoute";
+import { RoleRoute } from "@/components/RoleRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import POSPage from "./pages/POSPage";
@@ -39,17 +40,22 @@ const App = () => (
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 <Route element={<CompanyRoute />}>
                   <Route element={<AppLayout />}>
-                    <Route path="/" element={<Index />} />
+                    {/* All roles */}
                     <Route path="/pos" element={<POSPage />} />
-                    <Route path="/productos" element={<ProductsPage />} />
-                    <Route path="/categorias" element={<CategoriasPage />} />
-                    <Route path="/clientes" element={<ClientesPage />} />
-                    <Route path="/ventas" element={<SalesPage />} />
                     <Route path="/caja" element={<CajaPage />} />
-                    <Route path="/reservas" element={<ReservasPage />} />
-                    <Route path="/reportes" element={<ReportesPage />} />
-                    <Route path="/configuracion" element={<ConfiguracionPage />} />
-                    <Route path="/compras" element={<ComprasPage />} />
+
+                    {/* Owner & Admin only */}
+                    <Route element={<RoleRoute allowedRoles={["owner", "admin"]} />}>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/productos" element={<ProductsPage />} />
+                      <Route path="/categorias" element={<CategoriasPage />} />
+                      <Route path="/clientes" element={<ClientesPage />} />
+                      <Route path="/ventas" element={<SalesPage />} />
+                      <Route path="/reservas" element={<ReservasPage />} />
+                      <Route path="/reportes" element={<ReportesPage />} />
+                      <Route path="/configuracion" element={<ConfiguracionPage />} />
+                      <Route path="/compras" element={<ComprasPage />} />
+                    </Route>
                   </Route>
                 </Route>
               </Route>

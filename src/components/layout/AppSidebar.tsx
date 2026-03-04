@@ -30,19 +30,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompany, AppRole } from "@/contexts/CompanyContext";
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles?: AppRole[]; // undefined = all roles
+}
+
+const navigation: NavItem[] = [
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["owner", "admin"] },
   { name: "Punto de Venta", href: "/pos", icon: ShoppingCart },
-  { name: "Productos", href: "/productos", icon: Package },
-  { name: "Categorías", href: "/categorias", icon: Box },
-  { name: "Compras", href: "/compras", icon: Truck },
-  { name: "Clientes", href: "/clientes", icon: Users },
-  { name: "Ventas", href: "/ventas", icon: Receipt },
+  { name: "Productos", href: "/productos", icon: Package, roles: ["owner", "admin"] },
+  { name: "Categorías", href: "/categorias", icon: Box, roles: ["owner", "admin"] },
+  { name: "Compras", href: "/compras", icon: Truck, roles: ["owner", "admin"] },
+  { name: "Clientes", href: "/clientes", icon: Users, roles: ["owner", "admin"] },
+  { name: "Ventas", href: "/ventas", icon: Receipt, roles: ["owner", "admin"] },
   { name: "Caja", href: "/caja", icon: Wallet },
-  { name: "Reservas", href: "/reservas", icon: Calendar },
-  { name: "Reportes", href: "/reportes", icon: BarChart3 },
-  { name: "Configuración", href: "/configuracion", icon: Settings },
+  { name: "Reservas", href: "/reservas", icon: Calendar, roles: ["owner", "admin"] },
+  { name: "Reportes", href: "/reportes", icon: BarChart3, roles: ["owner", "admin"] },
+  { name: "Configuración", href: "/configuracion", icon: Settings, roles: ["owner", "admin"] },
 ];
 
 interface AppSidebarProps {
@@ -53,12 +61,18 @@ interface AppSidebarProps {
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const location = useLocation();
   const { signOut } = useAuth();
+  const { userRole } = useCompany();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     setShowLogoutDialog(false);
   };
+
+  const filteredNavigation = navigation.filter(
+    (item) => !item.roles || (userRole && item.roles.includes(userRole))
+  );
+
 
   return (
     <>
@@ -85,7 +99,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-          {navigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const isActive = location.pathname === item.href;
             const Icon = item.icon;
 
