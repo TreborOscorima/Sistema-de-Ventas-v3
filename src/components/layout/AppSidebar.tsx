@@ -30,27 +30,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCompany, AppRole } from "@/contexts/CompanyContext";
+import { useCompany, AppRole, ModuleKey } from "@/contexts/CompanyContext";
 
 interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  roles?: AppRole[]; // undefined = all roles
+  module?: ModuleKey; // module key for permission check
 }
 
 const navigation: NavItem[] = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["owner", "admin"] },
-  { name: "Punto de Venta", href: "/pos", icon: ShoppingCart },
-  { name: "Productos", href: "/productos", icon: Package, roles: ["owner", "admin"] },
-  { name: "Categorías", href: "/categorias", icon: Box, roles: ["owner", "admin"] },
-  { name: "Compras", href: "/compras", icon: Truck, roles: ["owner", "admin"] },
-  { name: "Clientes", href: "/clientes", icon: Users, roles: ["owner", "admin"] },
-  { name: "Ventas", href: "/ventas", icon: Receipt, roles: ["owner", "admin"] },
-  { name: "Caja", href: "/caja", icon: Wallet },
-  { name: "Reservas", href: "/reservas", icon: Calendar },
-  { name: "Reportes", href: "/reportes", icon: BarChart3, roles: ["owner", "admin"] },
-  { name: "Configuración", href: "/configuracion", icon: Settings, roles: ["owner", "admin"] },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, module: "dashboard" },
+  { name: "Punto de Venta", href: "/pos", icon: ShoppingCart, module: "pos" },
+  { name: "Productos", href: "/productos", icon: Package, module: "productos" },
+  { name: "Categorías", href: "/categorias", icon: Box, module: "categorias" },
+  { name: "Compras", href: "/compras", icon: Truck, module: "compras" },
+  { name: "Clientes", href: "/clientes", icon: Users, module: "clientes" },
+  { name: "Ventas", href: "/ventas", icon: Receipt, module: "ventas" },
+  { name: "Caja", href: "/caja", icon: Wallet, module: "caja" },
+  { name: "Reservas", href: "/reservas", icon: Calendar, module: "reservas" },
+  { name: "Reportes", href: "/reportes", icon: BarChart3, module: "reportes" },
+  { name: "Configuración", href: "/configuracion", icon: Settings, module: "configuracion" },
 ];
 
 interface AppSidebarProps {
@@ -61,7 +61,7 @@ interface AppSidebarProps {
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const location = useLocation();
   const { signOut } = useAuth();
-  const { userRole } = useCompany();
+  const { hasModuleAccess } = useCompany();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const handleSignOut = async () => {
@@ -70,7 +70,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   };
 
   const filteredNavigation = navigation.filter(
-    (item) => !item.roles || (userRole && item.roles.includes(userRole))
+    (item) => !item.module || hasModuleAccess(item.module)
   );
 
 
