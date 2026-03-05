@@ -7,7 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CompanyProvider } from "@/contexts/CompanyContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { CompanyRoute } from "@/components/CompanyRoute";
-import { RoleRoute } from "@/components/RoleRoute";
+import { PermissionRoute } from "@/components/PermissionRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import POSPage from "./pages/POSPage";
@@ -40,20 +40,38 @@ const App = () => (
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 <Route element={<CompanyRoute />}>
                   <Route element={<AppLayout />}>
-                    {/* All roles */}
-                    <Route path="/pos" element={<POSPage />} />
-                    <Route path="/caja" element={<CajaPage />} />
-                    <Route path="/reservas" element={<ReservasPage />} />
-
-                    {/* Owner & Admin only */}
-                    <Route element={<RoleRoute allowedRoles={["owner", "admin"]} />}>
+                    {/* Each route protected by module permission */}
+                    <Route element={<PermissionRoute module="dashboard" />}>
                       <Route path="/" element={<Index />} />
+                    </Route>
+                    <Route element={<PermissionRoute module="pos" />}>
+                      <Route path="/pos" element={<POSPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute module="caja" />}>
+                      <Route path="/caja" element={<CajaPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute module="reservas" />}>
+                      <Route path="/reservas" element={<ReservasPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute module="productos" />}>
                       <Route path="/productos" element={<ProductsPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute module="categorias" />}>
                       <Route path="/categorias" element={<CategoriasPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute module="clientes" />}>
                       <Route path="/clientes" element={<ClientesPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute module="ventas" />}>
                       <Route path="/ventas" element={<SalesPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute module="reportes" />}>
                       <Route path="/reportes" element={<ReportesPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute module="configuracion" />}>
                       <Route path="/configuracion" element={<ConfiguracionPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute module="compras" />}>
                       <Route path="/compras" element={<ComprasPage />} />
                     </Route>
                   </Route>

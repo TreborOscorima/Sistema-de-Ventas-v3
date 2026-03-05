@@ -12,7 +12,8 @@ import { useCompany, Branch, AppRole } from "@/contexts/CompanyContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
-import { Building2, Plus, Pencil, Trash2, Users, Loader2, MapPin, Phone, Mail, UserPlus, UserMinus } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Loader2, MapPin, Phone, Mail, UserPlus, UserMinus, Shield } from "lucide-react";
+import { EmployeePermissionsDialog } from "./EmployeePermissionsDialog";
 
 interface BranchUser {
   user_id: string;
@@ -43,6 +44,9 @@ export function BranchManagement() {
   const [assignEmail, setAssignEmail] = useState("");
   const [assignRole, setAssignRole] = useState<AppRole>("cashier");
   const [assigning, setAssigning] = useState(false);
+
+  // Permissions dialog state
+  const [permissionsUser, setPermissionsUser] = useState<{ userId: string; name: string } | null>(null);
 
   const isOwner = userRole === "owner";
 
@@ -412,11 +416,16 @@ export function BranchManagement() {
                               <TableCell>{bu.profile?.full_name || "—"}</TableCell>
                               <TableCell>{bu.profile?.email || "—"}</TableCell>
                               <TableCell>{getRoleBadge(bu.role)}</TableCell>
-                              <TableCell>
+                              <TableCell className="flex gap-1">
                                 {bu.role !== "owner" && (
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveEmployee(branch.id, bu.user_id)}>
-                                    <UserMinus className="h-3 w-3" />
-                                  </Button>
+                                  <>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" title="Permisos" onClick={() => setPermissionsUser({ userId: bu.user_id, name: bu.profile?.full_name || bu.profile?.email || "Empleado" })}>
+                                      <Shield className="h-3 w-3" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveEmployee(branch.id, bu.user_id)}>
+                                      <UserMinus className="h-3 w-3" />
+                                    </Button>
+                                  </>
                                 )}
                               </TableCell>
                             </TableRow>
@@ -507,6 +516,17 @@ export function BranchManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Permissions Dialog */}
+      {company && permissionsUser && (
+        <EmployeePermissionsDialog
+          open={!!permissionsUser}
+          onOpenChange={(open) => { if (!open) setPermissionsUser(null); }}
+          userId={permissionsUser.userId}
+          userName={permissionsUser.name}
+          companyId={company.id}
+        />
+      )}
     </div>
   );
 }

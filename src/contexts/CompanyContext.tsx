@@ -40,13 +40,34 @@ export interface UserRole {
   created_at: string;
 }
 
+export const ALL_MODULES = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'pos', label: 'Punto de Venta' },
+  { key: 'productos', label: 'Productos' },
+  { key: 'categorias', label: 'Categorías' },
+  { key: 'compras', label: 'Compras' },
+  { key: 'clientes', label: 'Clientes' },
+  { key: 'ventas', label: 'Ventas' },
+  { key: 'caja', label: 'Caja' },
+  { key: 'reservas', label: 'Reservas' },
+  { key: 'reportes', label: 'Reportes' },
+  { key: 'configuracion', label: 'Configuración' },
+] as const;
+
+export type ModuleKey = typeof ALL_MODULES[number]['key'];
+
+// Default modules for cashiers when no custom permissions are set
+const DEFAULT_CASHIER_MODULES: ModuleKey[] = ['pos', 'caja', 'reservas'];
+
 interface CompanyContextType {
   company: Company | null;
   branches: Branch[];
   activeBranch: Branch | null;
   userRole: AppRole | null;
+  userPermissions: ModuleKey[];
   loading: boolean;
   needsOnboarding: boolean;
+  hasModuleAccess: (module: ModuleKey) => boolean;
   setActiveBranch: (branch: Branch) => void;
   createCompanyAndBranch: (companyName: string, branchName: string, branchAddress?: string) => Promise<void>;
   refreshCompany: () => Promise<void>;
@@ -62,6 +83,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [activeBranch, setActiveBranchState] = useState<Branch | null>(null);
   const [userRole, setUserRole] = useState<AppRole | null>(null);
+  const [userPermissions, setUserPermissions] = useState<ModuleKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
@@ -71,6 +93,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       setBranches([]);
       setActiveBranchState(null);
       setUserRole(null);
+      setUserPermissions([]);
       setNeedsOnboarding(false);
       setLoading(false);
       return;
@@ -145,6 +168,24 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(ACTIVE_BRANCH_KEY, availableBranches[0].id);
       }
 
+      // Load user permissions for non-owner/admin roles
+      if (userRoleData.role === 'owner' || userRoleData.role === 'admin') {
+        setUserPermissions(ALL_MODULES.map(m => m.key));
+      } else {
+        const { data: perms } = await supabase
+          .from('user_permissions')
+          .select('module')
+          .eq('user_id', user.id)
+          .eq('company_id', userRoleData.company_id);
+
+        if (perms && perms.length > 0) {
+          setUserPermissions(perms.map(p => p.module as ModuleKey));
+        } else {
+          // Default cashier modules if no custom permissions set
+          setUserPermissions(DEFAULT_CASHIER_MODULES);
+        }
+      }
+
       setNeedsOnboarding(false);
     } catch (err) {
       console.error('Error loading company data:', err);
@@ -156,6 +197,12 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     loadCompanyData();
   }, [loadCompanyData]);
+
+  const hasModuleAccess = useCallback((module: ModuleKey): boolean => {
+    if (!userRole) return false;
+    if (userRole === 'owner' || userRole === 'admin') return true;
+    return userPermissions.includes(module);
+  }, [userRole, userPermissions]);
 
   const setActiveBranch = (branch: Branch) => {
     setActiveBranchState(branch);
@@ -183,8 +230,10 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       branches,
       activeBranch,
       userRole,
+      userPermissions,
       loading,
       needsOnboarding,
+      hasModuleAccess,
       setActiveBranch,
       createCompanyAndBranch,
       refreshCompany: loadCompanyData
