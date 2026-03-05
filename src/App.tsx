@@ -43,6 +43,7 @@ const App = () => (
                     {/* All roles */}
                     <Route path="/pos" element={<POSPage />} />
                     <Route path="/caja" element={<CajaPage />} />
+                    <Route path="/reservas" element={<ReservasPage />} />
 
                     {/* Owner & Admin only */}
                     <Route element={<RoleRoute allowedRoles={["owner", "admin"]} />}>
@@ -51,7 +52,6 @@ const App = () => (
                       <Route path="/categorias" element={<CategoriasPage />} />
                       <Route path="/clientes" element={<ClientesPage />} />
                       <Route path="/ventas" element={<SalesPage />} />
-                      <Route path="/reservas" element={<ReservasPage />} />
                       <Route path="/reportes" element={<ReportesPage />} />
                       <Route path="/configuracion" element={<ConfiguracionPage />} />
                       <Route path="/compras" element={<ComprasPage />} />

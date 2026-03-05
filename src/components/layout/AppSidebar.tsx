@@ -48,7 +48,7 @@ const navigation: NavItem[] = [
   { name: "Clientes", href: "/clientes", icon: Users, roles: ["owner", "admin"] },
   { name: "Ventas", href: "/ventas", icon: Receipt, roles: ["owner", "admin"] },
   { name: "Caja", href: "/caja", icon: Wallet },
-  { name: "Reservas", href: "/reservas", icon: Calendar, roles: ["owner", "admin"] },
+  { name: "Reservas", href: "/reservas", icon: Calendar },
   { name: "Reportes", href: "/reportes", icon: BarChart3, roles: ["owner", "admin"] },
   { name: "Configuración", href: "/configuracion", icon: Settings, roles: ["owner", "admin"] },
 ];
