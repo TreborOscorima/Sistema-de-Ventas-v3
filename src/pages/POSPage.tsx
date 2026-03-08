@@ -702,7 +702,7 @@ export default function POSPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">IGV (18%)</span>
-                  <span>S/ {tax.toFixed(2)}</span>
+                  <span>{currencySymbol} {tax.toFixed(2)}</span>
                 </div>
                 <Separator />
               </>
