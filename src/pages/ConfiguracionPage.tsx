@@ -112,9 +112,17 @@ const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
         </TabsContent>
 
         {userRole === "owner" && (
-          <TabsContent value="branches" className="mt-6">
-            <BranchManagement />
-          </TabsContent>
+          <>
+            <TabsContent value="payment-methods" className="mt-6">
+              <PaymentMethodsSettings />
+            </TabsContent>
+            <TabsContent value="currency" className="mt-6">
+              <CurrencySettings />
+            </TabsContent>
+            <TabsContent value="branches" className="mt-6">
+              <BranchManagement />
+            </TabsContent>
+          </>
         )}
       </Tabs>
     </div>
