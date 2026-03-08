@@ -577,7 +577,7 @@ export default function POSPage() {
                       <div className="flex-1">
                         <p className="font-medium leading-tight">{item.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          S/ {item.price.toFixed(2)} c/u
+                          {currencySymbol} {item.price.toFixed(2)} c/u
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
