@@ -288,6 +288,7 @@ export type Database = {
       companies: {
         Row: {
           created_at: string
+          currency: string
           id: string
           logo_url: string | null
           name: string
@@ -303,6 +304,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          currency?: string
           id?: string
           logo_url?: string | null
           name: string
@@ -318,6 +320,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          currency?: string
           id?: string
           logo_url?: string | null
           name?: string
@@ -485,6 +488,53 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_methods: {
+        Row: {
+          company_id: string
+          created_at: string
+          icon: string
+          id: string
+          is_active: boolean
+          is_custom: boolean
+          key: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          is_custom?: boolean
+          key: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          is_custom?: boolean
+          key?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -1008,6 +1058,10 @@ export type Database = {
           _company_name: string
         }
         Returns: Json
+      }
+      seed_default_payment_methods: {
+        Args: { _company_id: string }
+        Returns: undefined
       }
       user_belongs_to_branch: {
         Args: { _branch_id: string; _user_id: string }

@@ -39,6 +39,10 @@ import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { CombinedReceiptModal } from "@/components/sales/CombinedReceiptModal";
 import { CartItem } from "@/lib/sales";
+import { useActivePaymentMethods } from "@/hooks/use-payment-methods";
+import { PaymentMethodIcon } from "@/components/settings/PaymentMethodsSettings";
+import { useCompany } from "@/contexts/CompanyContext";
+import { getCurrencySymbol, formatCurrency as fmtCurrency } from "@/lib/currency";
 
 interface ReceiptSaleData {
   id: string;
@@ -88,6 +92,11 @@ export default function POSPage() {
     getReceiptData,
   } = usePOS();
 
+  const { company } = useCompany();
+  const currencyCode = company?.currency || 'PEN';
+  const currencySymbol = getCurrencySymbol(currencyCode);
+  const { data: activePaymentMethods = [] } = useActivePaymentMethods();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [reservationSearchTerm, setReservationSearchTerm] = useState("");
   const [reservationDateFilter, setReservationDateFilter] = useState<string>("");
@@ -102,16 +111,10 @@ export default function POSPage() {
     return matchesSearch && matchesCategory;
   });
 
-  // Receipt modal state
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptSaleData, setReceiptSaleData] = useState<ReceiptSaleData | null>(null);
 
-  const paymentMethods = [
-    { id: "cash", name: "Efectivo", icon: Banknote },
-    { id: "card", name: "Tarjeta", icon: CreditCard },
-    { id: "yape", name: "Yape", icon: Smartphone },
-    { id: "plin", name: "Plin", icon: Smartphone },
-  ];
+  const formatCurrency = (value: number) => fmtCurrency(value, currencyCode);
 
   const handleProcessSale = async () => {
     // Capture data before processing (cart will be cleared after)
@@ -166,12 +169,6 @@ export default function POSPage() {
     setIsCredit(checked);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-PE', {
-      style: 'currency',
-      currency: 'PEN'
-    }).format(value);
-  };
 
   const formatDate = (dateString: string) => {
     return format(parseISO(dateString), "EEE d 'de' MMM", { locale: es });
@@ -308,7 +305,7 @@ export default function POSPage() {
                       {product.name}
                     </h4>
                     <p className="mt-auto text-lg font-bold text-primary">
-                      S/ {Number(product.price).toFixed(2)}
+                      {currencySymbol} {Number(product.price).toFixed(2)}
                     </p>
                   </button>
                   );
@@ -424,7 +421,7 @@ export default function POSPage() {
                       </div>
                       
                       <p className="mt-auto text-lg font-bold text-primary">
-                        S/ {Number(reservation.total_amount).toFixed(2)}
+                        {currencySymbol} {Number(reservation.total_amount).toFixed(2)}
                       </p>
                     </button>
                     );
@@ -501,7 +498,7 @@ export default function POSPage() {
             {isCredit && selectedCustomer && hasProducts && (
               <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
                 <p className="text-xs text-amber-600">
-                  Se cargará S/ {productTotal.toFixed(2)} a la cuenta de {selectedCustomer.name}
+                  Se cargará {currencySymbol} {productTotal.toFixed(2)} a la cuenta de {selectedCustomer.name}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Saldo actual: {formatCurrency(selectedCustomer.balance)}
@@ -548,7 +545,7 @@ export default function POSPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-primary">
-                          S/ {reservation.price.toFixed(2)}
+                          {currencySymbol} {reservation.price.toFixed(2)}
                         </span>
                         <Button
                           variant="ghost"
@@ -580,7 +577,7 @@ export default function POSPage() {
                       <div className="flex-1">
                         <p className="font-medium leading-tight">{item.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          S/ {item.price.toFixed(2)} c/u
+                          {currencySymbol} {item.price.toFixed(2)} c/u
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -623,19 +620,19 @@ export default function POSPage() {
         {/* Cart Footer */}
         <div className="border-t border-border p-4">
           {/* Payment Methods */}
-          <div className="mb-4 grid grid-cols-4 gap-2">
-            {paymentMethods.map((method) => (
+          <div className={`mb-4 grid gap-2`} style={{ gridTemplateColumns: `repeat(${Math.min(activePaymentMethods.length, 4)}, 1fr)` }}>
+            {activePaymentMethods.map((method) => (
               <Button
-                key={method.id}
-                variant={selectedPayment === method.id ? "default" : "outline"}
+                key={method.key}
+                variant={selectedPayment === method.key ? "default" : "outline"}
                 size="sm"
                 className={cn(
                   "flex-col gap-1 h-auto py-2",
-                  selectedPayment === method.id && "bg-primary text-primary-foreground"
+                  selectedPayment === method.key && "bg-primary text-primary-foreground"
                 )}
-                onClick={() => setSelectedPayment(method.id)}
+                onClick={() => setSelectedPayment(method.key)}
               >
-                <method.icon className="h-4 w-4" />
+                <PaymentMethodIcon icon={method.icon} className="h-4 w-4" />
                 <span className="text-xs">{method.name}</span>
               </Button>
             ))}
@@ -649,7 +646,7 @@ export default function POSPage() {
               </Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                  S/
+                  {currencySymbol}
                 </span>
                 <Input
                   id="cash-received"
@@ -666,14 +663,14 @@ export default function POSPage() {
                 <div className="flex justify-between items-center p-2 rounded-lg bg-green-500/10 border border-green-500/20">
                   <span className="text-sm text-green-600 font-medium">Vuelto:</span>
                   <span className="text-lg font-bold text-green-600">
-                    S/ {(parseFloat(cashReceived) - total).toFixed(2)}
+                    {currencySymbol} {(parseFloat(cashReceived) - total).toFixed(2)}
                   </span>
                 </div>
               )}
               {cashReceived && parseFloat(cashReceived) > 0 && parseFloat(cashReceived) < total && (
                 <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
                   <span className="text-sm text-red-600">
-                    Falta: S/ {(total - parseFloat(cashReceived)).toFixed(2)}
+                    Falta: {currencySymbol} {(total - parseFloat(cashReceived)).toFixed(2)}
                   </span>
                 </div>
               )}
@@ -687,11 +684,11 @@ export default function POSPage() {
               <>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Reservas</span>
-                  <span>S/ {reservationsTotal.toFixed(2)}</span>
+                  <span>{currencySymbol} {reservationsTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Productos (inc. IGV)</span>
-                  <span>S/ {productTotal.toFixed(2)}</span>
+                  <span>{currencySymbol} {productTotal.toFixed(2)}</span>
                 </div>
                 <Separator />
               </>
@@ -701,18 +698,18 @@ export default function POSPage() {
               <>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>S/ {subtotal.toFixed(2)}</span>
+                  <span>{currencySymbol} {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">IGV (18%)</span>
-                  <span>S/ {tax.toFixed(2)}</span>
+                  <span>{currencySymbol} {tax.toFixed(2)}</span>
                 </div>
                 <Separator />
               </>
             )}
             <div className="flex justify-between text-lg font-bold">
               <span>Total</span>
-              <span className="text-primary">S/ {total.toFixed(2)}</span>
+              <span className="text-primary">{currencySymbol} {total.toFixed(2)}</span>
             </div>
           </div>
 

@@ -6,8 +6,10 @@ import { TaxSettings } from "@/components/settings/TaxSettings";
 import { ReceiptSettings } from "@/components/settings/ReceiptSettings";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { BranchManagement } from "@/components/settings/BranchManagement";
+import { PaymentMethodsSettings } from "@/components/settings/PaymentMethodsSettings";
+import { CurrencySettings } from "@/components/settings/CurrencySettings";
 import { useCompany } from "@/contexts/CompanyContext";
-import { User, Building2, Percent, Receipt, Palette, Settings, GitBranch } from "lucide-react";
+import { User, Building2, Percent, Receipt, Palette, Settings, GitBranch, CreditCard, Globe } from "lucide-react";
 
 const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -26,7 +28,7 @@ const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 h-auto gap-2 bg-transparent p-0">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8 h-auto gap-2 bg-transparent p-0">
           <TabsTrigger 
             value="profile" 
             className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -63,13 +65,29 @@ const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
             <span className="hidden sm:inline">Apariencia</span>
           </TabsTrigger>
           {userRole === "owner" && (
-            <TabsTrigger 
-              value="branches"
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              <GitBranch className="h-4 w-4" />
-              <span className="hidden sm:inline">Sucursales</span>
-            </TabsTrigger>
+            <>
+              <TabsTrigger 
+                value="payment-methods"
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <CreditCard className="h-4 w-4" />
+                <span className="hidden sm:inline">Pagos</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="currency"
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Globe className="h-4 w-4" />
+                <span className="hidden sm:inline">Moneda</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="branches"
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <GitBranch className="h-4 w-4" />
+                <span className="hidden sm:inline">Sucursales</span>
+              </TabsTrigger>
+            </>
           )}
         </TabsList>
 
@@ -94,9 +112,17 @@ const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
         </TabsContent>
 
         {userRole === "owner" && (
-          <TabsContent value="branches" className="mt-6">
-            <BranchManagement />
-          </TabsContent>
+          <>
+            <TabsContent value="payment-methods" className="mt-6">
+              <PaymentMethodsSettings />
+            </TabsContent>
+            <TabsContent value="currency" className="mt-6">
+              <CurrencySettings />
+            </TabsContent>
+            <TabsContent value="branches" className="mt-6">
+              <BranchManagement />
+            </TabsContent>
+          </>
         )}
       </Tabs>
     </div>

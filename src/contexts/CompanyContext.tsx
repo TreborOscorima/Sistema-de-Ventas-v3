@@ -14,6 +14,7 @@ export interface Company {
   receipt_footer: string | null;
   show_logo_on_receipt: boolean;
   thermal_paper_size: string;
+  currency: string;
   created_at: string;
   updated_at: string;
 }
