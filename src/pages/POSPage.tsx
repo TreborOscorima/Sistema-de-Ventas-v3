@@ -43,7 +43,6 @@ import { useActivePaymentMethods } from "@/hooks/use-payment-methods";
 import { PaymentMethodIcon } from "@/components/settings/PaymentMethodsSettings";
 import { useCompany } from "@/contexts/CompanyContext";
 import { getCurrencySymbol, formatCurrency as fmtCurrency } from "@/lib/currency";
-import { CartItem } from "@/lib/sales";
 
 interface ReceiptSaleData {
   id: string;
