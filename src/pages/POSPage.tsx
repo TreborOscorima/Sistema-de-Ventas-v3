@@ -39,6 +39,11 @@ import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { CombinedReceiptModal } from "@/components/sales/CombinedReceiptModal";
 import { CartItem } from "@/lib/sales";
+import { useActivePaymentMethods } from "@/hooks/use-payment-methods";
+import { PaymentMethodIcon } from "@/components/settings/PaymentMethodsSettings";
+import { useCompany } from "@/contexts/CompanyContext";
+import { getCurrencySymbol, formatCurrency as fmtCurrency } from "@/lib/currency";
+import { CartItem } from "@/lib/sales";
 
 interface ReceiptSaleData {
   id: string;
