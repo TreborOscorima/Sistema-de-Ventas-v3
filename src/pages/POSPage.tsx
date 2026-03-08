@@ -709,7 +709,7 @@ export default function POSPage() {
             )}
             <div className="flex justify-between text-lg font-bold">
               <span>Total</span>
-              <span className="text-primary">S/ {total.toFixed(2)}</span>
+              <span className="text-primary">{currencySymbol} {total.toFixed(2)}</span>
             </div>
           </div>
 
