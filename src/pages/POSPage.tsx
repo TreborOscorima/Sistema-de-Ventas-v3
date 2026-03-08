@@ -663,7 +663,7 @@ export default function POSPage() {
                 <div className="flex justify-between items-center p-2 rounded-lg bg-green-500/10 border border-green-500/20">
                   <span className="text-sm text-green-600 font-medium">Vuelto:</span>
                   <span className="text-lg font-bold text-green-600">
-                    S/ {(parseFloat(cashReceived) - total).toFixed(2)}
+                    {currencySymbol} {(parseFloat(cashReceived) - total).toFixed(2)}
                   </span>
                 </div>
               )}
