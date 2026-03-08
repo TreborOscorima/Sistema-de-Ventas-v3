@@ -421,7 +421,7 @@ export default function POSPage() {
                       </div>
                       
                       <p className="mt-auto text-lg font-bold text-primary">
-                        S/ {Number(reservation.total_amount).toFixed(2)}
+                        {currencySymbol} {Number(reservation.total_amount).toFixed(2)}
                       </p>
                     </button>
                     );
