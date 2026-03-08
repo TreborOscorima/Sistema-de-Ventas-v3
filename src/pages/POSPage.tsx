@@ -93,30 +93,17 @@ export default function POSPage() {
     getReceiptData,
   } = usePOS();
 
+  const { company } = useCompany();
+  const currencyCode = company?.currency || 'PEN';
+  const currencySymbol = getCurrencySymbol(currencyCode);
+  const { data: activePaymentMethods = [] } = useActivePaymentMethods();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [reservationSearchTerm, setReservationSearchTerm] = useState("");
   const [reservationDateFilter, setReservationDateFilter] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [cashReceived, setCashReceived] = useState<string>("");
   const [activeTab, setActiveTab] = useState("products");
-
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || 
-      (product.category && product.category.slug === selectedCategory);
-    return matchesSearch && matchesCategory;
-  });
-
-  // Receipt modal state
-  const [showReceipt, setShowReceipt] = useState(false);
-  const [receiptSaleData, setReceiptSaleData] = useState<ReceiptSaleData | null>(null);
-
-  const paymentMethods = [
-    { id: "cash", name: "Efectivo", icon: Banknote },
-    { id: "card", name: "Tarjeta", icon: CreditCard },
-    { id: "yape", name: "Yape", icon: Smartphone },
-    { id: "plin", name: "Plin", icon: Smartphone },
-  ];
 
   const handleProcessSale = async () => {
     // Capture data before processing (cart will be cleared after)
