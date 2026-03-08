@@ -698,7 +698,7 @@ export default function POSPage() {
               <>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>S/ {subtotal.toFixed(2)}</span>
+                  <span>{currencySymbol} {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">IGV (18%)</span>
