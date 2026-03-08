@@ -498,7 +498,7 @@ export default function POSPage() {
             {isCredit && selectedCustomer && hasProducts && (
               <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
                 <p className="text-xs text-amber-600">
-                  Se cargará S/ {productTotal.toFixed(2)} a la cuenta de {selectedCustomer.name}
+                  Se cargará {currencySymbol} {productTotal.toFixed(2)} a la cuenta de {selectedCustomer.name}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Saldo actual: {formatCurrency(selectedCustomer.balance)}
