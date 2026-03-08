@@ -620,19 +620,19 @@ export default function POSPage() {
         {/* Cart Footer */}
         <div className="border-t border-border p-4">
           {/* Payment Methods */}
-          <div className="mb-4 grid grid-cols-4 gap-2">
-            {paymentMethods.map((method) => (
+          <div className={`mb-4 grid gap-2`} style={{ gridTemplateColumns: `repeat(${Math.min(activePaymentMethods.length, 4)}, 1fr)` }}>
+            {activePaymentMethods.map((method) => (
               <Button
-                key={method.id}
-                variant={selectedPayment === method.id ? "default" : "outline"}
+                key={method.key}
+                variant={selectedPayment === method.key ? "default" : "outline"}
                 size="sm"
                 className={cn(
                   "flex-col gap-1 h-auto py-2",
-                  selectedPayment === method.id && "bg-primary text-primary-foreground"
+                  selectedPayment === method.key && "bg-primary text-primary-foreground"
                 )}
-                onClick={() => setSelectedPayment(method.id)}
+                onClick={() => setSelectedPayment(method.key)}
               >
-                <method.icon className="h-4 w-4" />
+                <PaymentMethodIcon icon={method.icon} className="h-4 w-4" />
                 <span className="text-xs">{method.name}</span>
               </Button>
             ))}
