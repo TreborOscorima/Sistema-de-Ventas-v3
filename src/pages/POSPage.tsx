@@ -670,7 +670,7 @@ export default function POSPage() {
               {cashReceived && parseFloat(cashReceived) > 0 && parseFloat(cashReceived) < total && (
                 <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
                   <span className="text-sm text-red-600">
-                    Falta: S/ {(total - parseFloat(cashReceived)).toFixed(2)}
+                    Falta: {currencySymbol} {(total - parseFloat(cashReceived)).toFixed(2)}
                   </span>
                 </div>
               )}
