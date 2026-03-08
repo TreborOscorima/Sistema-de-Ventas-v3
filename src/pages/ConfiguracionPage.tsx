@@ -65,13 +65,29 @@ const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
             <span className="hidden sm:inline">Apariencia</span>
           </TabsTrigger>
           {userRole === "owner" && (
-            <TabsTrigger 
-              value="branches"
-              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              <GitBranch className="h-4 w-4" />
-              <span className="hidden sm:inline">Sucursales</span>
-            </TabsTrigger>
+            <>
+              <TabsTrigger 
+                value="payment-methods"
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <CreditCard className="h-4 w-4" />
+                <span className="hidden sm:inline">Pagos</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="currency"
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Globe className="h-4 w-4" />
+                <span className="hidden sm:inline">Moneda</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="branches"
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <GitBranch className="h-4 w-4" />
+                <span className="hidden sm:inline">Sucursales</span>
+              </TabsTrigger>
+            </>
           )}
         </TabsList>
 
