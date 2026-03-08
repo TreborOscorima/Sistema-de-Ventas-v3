@@ -6,8 +6,10 @@ import { TaxSettings } from "@/components/settings/TaxSettings";
 import { ReceiptSettings } from "@/components/settings/ReceiptSettings";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { BranchManagement } from "@/components/settings/BranchManagement";
+import { PaymentMethodsSettings } from "@/components/settings/PaymentMethodsSettings";
+import { CurrencySettings } from "@/components/settings/CurrencySettings";
 import { useCompany } from "@/contexts/CompanyContext";
-import { User, Building2, Percent, Receipt, Palette, Settings, GitBranch } from "lucide-react";
+import { User, Building2, Percent, Receipt, Palette, Settings, GitBranch, CreditCard, Globe } from "lucide-react";
 
 const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
   const [activeTab, setActiveTab] = useState("profile");
