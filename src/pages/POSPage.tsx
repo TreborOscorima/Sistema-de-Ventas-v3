@@ -688,7 +688,7 @@ export default function POSPage() {
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Productos (inc. IGV)</span>
-                  <span>S/ {productTotal.toFixed(2)}</span>
+                  <span>{currencySymbol} {productTotal.toFixed(2)}</span>
                 </div>
                 <Separator />
               </>
