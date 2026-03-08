@@ -305,7 +305,7 @@ export default function POSPage() {
                       {product.name}
                     </h4>
                     <p className="mt-auto text-lg font-bold text-primary">
-                      S/ {Number(product.price).toFixed(2)}
+                      {currencySymbol} {Number(product.price).toFixed(2)}
                     </p>
                   </button>
                   );
