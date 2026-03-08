@@ -545,7 +545,7 @@ export default function POSPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-primary">
-                          S/ {reservation.price.toFixed(2)}
+                          {currencySymbol} {reservation.price.toFixed(2)}
                         </span>
                         <Button
                           variant="ghost"
