@@ -104,6 +104,18 @@ export default function POSPage() {
   const [cashReceived, setCashReceived] = useState<string>("");
   const [activeTab, setActiveTab] = useState("products");
 
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || 
+      (product.category && product.category.slug === selectedCategory);
+    return matchesSearch && matchesCategory;
+  });
+
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptSaleData, setReceiptSaleData] = useState<ReceiptSaleData | null>(null);
+
+  const formatCurrency = (value: number) => fmtCurrency(value, currencyCode);
+
   const handleProcessSale = async () => {
     // Capture data before processing (cart will be cleared after)
     const receiptData = getReceiptData();
