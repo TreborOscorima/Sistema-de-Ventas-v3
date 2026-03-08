@@ -169,12 +169,6 @@ export default function POSPage() {
     setIsCredit(checked);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-PE', {
-      style: 'currency',
-      currency: 'PEN'
-    }).format(value);
-  };
 
   const formatDate = (dateString: string) => {
     return format(parseISO(dateString), "EEE d 'de' MMM", { locale: es });
