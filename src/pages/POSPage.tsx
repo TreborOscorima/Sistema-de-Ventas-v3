@@ -105,7 +105,9 @@ export default function POSPage() {
   const [activeTab, setActiveTab] = useState("products");
 
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = product.name.toLowerCase().includes(term) ||
+      (product.barcode && product.barcode.toLowerCase().includes(term));
     const matchesCategory = selectedCategory === "all" || 
       (product.category && product.category.slug === selectedCategory);
     return matchesSearch && matchesCategory;
