@@ -234,9 +234,24 @@ export default function POSPage() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Buscar productos..."
+                  placeholder="Buscar o escanear código de barras..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchTerm.trim()) {
+                      // Barcode scanner sends Enter after scan
+                      const found = products.find(p => 
+                        p.barcode?.toLowerCase() === searchTerm.trim().toLowerCase()
+                      );
+                      if (found && found.stock > 0) {
+                        addToCart(found);
+                        setSearchTerm("");
+                        e.preventDefault();
+                      }
+                    }
+                  }}
                   className="pl-10 input-focus"
                 />
               </div>

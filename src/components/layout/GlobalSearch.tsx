@@ -45,8 +45,8 @@ export function GlobalSearch() {
       const [productsRes, customersRes, reservationsRes] = await Promise.all([
         supabase
           .from("products")
-          .select("id, name, price, stock")
-          .ilike("name", searchTerm)
+          .select("id, name, price, stock, barcode")
+          .or(`name.ilike.${searchTerm},barcode.ilike.${searchTerm}`)
           .limit(5),
         supabase
           .from("customers")
