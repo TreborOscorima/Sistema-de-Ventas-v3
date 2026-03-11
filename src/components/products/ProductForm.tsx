@@ -46,6 +46,7 @@ interface ProductFormProps {
     price: number;
     stock: number;
     category_id: string | null;
+    barcode?: string | null;
   };
   isEditing?: boolean;
   saving?: boolean;
