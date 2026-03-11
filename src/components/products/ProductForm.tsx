@@ -95,6 +95,7 @@ export function ProductForm({
       setPrice("");
       setStock("");
       setCategoryId("none");
+      setBarcode("");
     }
   };
 
