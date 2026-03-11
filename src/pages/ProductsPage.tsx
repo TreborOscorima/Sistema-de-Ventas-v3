@@ -170,6 +170,7 @@ export default function ProductsPage() {
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead className="font-semibold">Producto</TableHead>
+                <TableHead className="font-semibold">Código</TableHead>
                 <TableHead className="font-semibold">Categoría</TableHead>
                 <TableHead className="font-semibold text-right">Precio</TableHead>
                 <TableHead className="font-semibold text-center">Stock</TableHead>
@@ -193,6 +194,13 @@ export default function ProductsPage() {
                         </div>
                         <span className="font-medium">{product.name}</span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {product.barcode ? (
+                        <code className="text-xs bg-muted px-2 py-1 rounded font-mono">{product.barcode}</code>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {product.category ? (
