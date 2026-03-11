@@ -10,6 +10,7 @@ export interface Product {
   stock: number;
   is_active: boolean;
   category_id: string | null;
+  barcode: string | null;
   created_at: string;
   updated_at: string;
   category?: {
@@ -25,6 +26,7 @@ export interface ProductFormData {
   stock: number;
   category_id: string | null;
   is_active?: boolean;
+  barcode?: string | null;
 }
 
 export function useProducts() {
@@ -76,6 +78,7 @@ export function useProducts() {
         price: productData.price,
         stock: productData.stock,
         category_id: productData.category_id,
+        barcode: productData.barcode || null,
         is_active: productData.is_active ?? true,
         user_id: user.id,
       };
@@ -118,6 +121,7 @@ export function useProducts() {
           price: productData.price,
           stock: productData.stock,
           category_id: productData.category_id,
+          barcode: productData.barcode,
           is_active: productData.is_active,
         })
         .eq("id", id);

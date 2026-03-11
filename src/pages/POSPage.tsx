@@ -105,7 +105,9 @@ export default function POSPage() {
   const [activeTab, setActiveTab] = useState("products");
 
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = product.name.toLowerCase().includes(term) ||
+      (product.barcode && product.barcode.toLowerCase().includes(term));
     const matchesCategory = selectedCategory === "all" || 
       (product.category && product.category.slug === selectedCategory);
     return matchesSearch && matchesCategory;
@@ -232,9 +234,24 @@ export default function POSPage() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Buscar productos..."
+                  placeholder="Buscar o escanear código de barras..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchTerm.trim()) {
+                      // Barcode scanner sends Enter after scan
+                      const found = products.find(p => 
+                        p.barcode?.toLowerCase() === searchTerm.trim().toLowerCase()
+                      );
+                      if (found && found.stock > 0) {
+                        addToCart(found);
+                        setSearchTerm("");
+                        e.preventDefault();
+                      }
+                    }
+                  }}
                   className="pl-10 input-focus"
                 />
               </div>

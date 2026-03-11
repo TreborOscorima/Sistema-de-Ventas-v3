@@ -47,9 +47,11 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter((product) => {
+    const term = searchTerm.toLowerCase();
+    return product.name.toLowerCase().includes(term) ||
+      (product.barcode && product.barcode.toLowerCase().includes(term));
+  });
 
   const stats = {
     total: products.length,
@@ -97,7 +99,7 @@ export default function ProductsPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar por nombre..."
+            placeholder="Buscar por nombre o código de barras..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 input-focus"
@@ -168,6 +170,7 @@ export default function ProductsPage() {
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead className="font-semibold">Producto</TableHead>
+                <TableHead className="font-semibold">Código</TableHead>
                 <TableHead className="font-semibold">Categoría</TableHead>
                 <TableHead className="font-semibold text-right">Precio</TableHead>
                 <TableHead className="font-semibold text-center">Stock</TableHead>
@@ -191,6 +194,13 @@ export default function ProductsPage() {
                         </div>
                         <span className="font-medium">{product.name}</span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {product.barcode ? (
+                        <code className="text-xs bg-muted px-2 py-1 rounded font-mono">{product.barcode}</code>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {product.category ? (
@@ -260,6 +270,7 @@ export default function ProductsPage() {
           price: Number(editingProduct.price),
           stock: editingProduct.stock,
           category_id: editingProduct.category_id,
+          barcode: editingProduct.barcode,
         } : undefined}
         isEditing
         saving={saving}

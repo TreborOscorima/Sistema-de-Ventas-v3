@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Barcode } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ interface ProductFormData {
   price: number;
   stock: number;
   category_id: string | null;
+  barcode?: string | null;
 }
 
 interface ProductFormProps {
@@ -42,6 +44,7 @@ interface ProductFormProps {
     price: number;
     stock: number;
     category_id: string | null;
+    barcode?: string | null;
   };
   isEditing?: boolean;
   saving?: boolean;
@@ -60,6 +63,7 @@ export function ProductForm({
   const [price, setPrice] = useState(initialData?.price?.toString() || "");
   const [stock, setStock] = useState(initialData?.stock?.toString() || "");
   const [categoryId, setCategoryId] = useState(initialData?.category_id || "none");
+  const [barcode, setBarcode] = useState(initialData?.barcode || "");
 
   useEffect(() => {
     if (open) {
@@ -67,6 +71,7 @@ export function ProductForm({
       setPrice(initialData?.price?.toString() || "");
       setStock(initialData?.stock?.toString() || "");
       setCategoryId(initialData?.category_id || "none");
+      setBarcode(initialData?.barcode || "");
     }
   }, [open, initialData]);
 
@@ -79,6 +84,7 @@ export function ProductForm({
       price: parseFloat(price) || 0,
       stock: parseInt(stock) || 0,
       category_id: categoryId === "none" ? null : categoryId,
+      barcode: barcode.trim() || null,
     });
 
     if (result !== null && result !== false) {
@@ -87,6 +93,7 @@ export function ProductForm({
       setPrice("");
       setStock("");
       setCategoryId("none");
+      setBarcode("");
     }
   };
 
@@ -106,13 +113,26 @@ export function ProductForm({
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
+              <Label htmlFor="barcode">Código de Barras</Label>
+              <div className="relative">
+                <Barcode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="barcode"
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value)}
+                  placeholder="Escanear o ingresar código"
+                  className="pl-10"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="name">Nombre</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Nombre del producto"
-                autoFocus
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
