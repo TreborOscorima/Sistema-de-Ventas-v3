@@ -65,6 +65,7 @@ export function ProductForm({
   const [price, setPrice] = useState(initialData?.price?.toString() || "");
   const [stock, setStock] = useState(initialData?.stock?.toString() || "");
   const [categoryId, setCategoryId] = useState(initialData?.category_id || "none");
+  const [barcode, setBarcode] = useState(initialData?.barcode || "");
 
   useEffect(() => {
     if (open) {
@@ -72,6 +73,7 @@ export function ProductForm({
       setPrice(initialData?.price?.toString() || "");
       setStock(initialData?.stock?.toString() || "");
       setCategoryId(initialData?.category_id || "none");
+      setBarcode(initialData?.barcode || "");
     }
   }, [open, initialData]);
 
