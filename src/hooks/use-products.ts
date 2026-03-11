@@ -78,6 +78,7 @@ export function useProducts() {
         price: productData.price,
         stock: productData.stock,
         category_id: productData.category_id,
+        barcode: productData.barcode || null,
         is_active: productData.is_active ?? true,
         user_id: user.id,
       };
