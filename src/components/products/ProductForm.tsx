@@ -30,6 +30,7 @@ interface ProductFormData {
   price: number;
   stock: number;
   category_id: string | null;
+  barcode?: string | null;
 }
 
 interface ProductFormProps {

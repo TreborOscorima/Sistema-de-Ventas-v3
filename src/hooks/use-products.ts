@@ -10,6 +10,7 @@ export interface Product {
   stock: number;
   is_active: boolean;
   category_id: string | null;
+  barcode: string | null;
   created_at: string;
   updated_at: string;
   category?: {
@@ -25,6 +26,7 @@ export interface ProductFormData {
   stock: number;
   category_id: string | null;
   is_active?: boolean;
+  barcode?: string | null;
 }
 
 export function useProducts() {
