@@ -262,6 +262,7 @@ export default function ProductsPage() {
           price: Number(editingProduct.price),
           stock: editingProduct.stock,
           category_id: editingProduct.category_id,
+          barcode: editingProduct.barcode,
         } : undefined}
         isEditing
         saving={saving}

@@ -121,6 +121,7 @@ export function useProducts() {
           price: productData.price,
           stock: productData.stock,
           category_id: productData.category_id,
+          barcode: productData.barcode,
           is_active: productData.is_active,
         })
         .eq("id", id);
