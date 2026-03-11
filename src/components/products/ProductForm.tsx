@@ -86,6 +86,7 @@ export function ProductForm({
       price: parseFloat(price) || 0,
       stock: parseInt(stock) || 0,
       category_id: categoryId === "none" ? null : categoryId,
+      barcode: barcode.trim() || null,
     });
 
     if (result !== null && result !== false) {
