@@ -47,9 +47,11 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter((product) => {
+    const term = searchTerm.toLowerCase();
+    return product.name.toLowerCase().includes(term) ||
+      (product.barcode && product.barcode.toLowerCase().includes(term));
+  });
 
   const stats = {
     total: products.length,
