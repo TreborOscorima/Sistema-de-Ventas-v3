@@ -14,6 +14,7 @@ export interface Product {
   price: number;
   stock: number;
   category_id: string | null;
+  barcode: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
