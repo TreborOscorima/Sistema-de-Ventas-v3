@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
   const { stats, recentSales, cashboxInfo, weeklySales, topProducts, loading } = useDashboard();
+  const { outOfStock, lowStock } = useLowStockAlerts();
 
   const formatCurrency = (value: number) => {
     return `S/ ${value.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
