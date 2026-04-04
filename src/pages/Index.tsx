@@ -10,7 +10,9 @@ import { RecentSalesTable } from "@/components/dashboard/RecentSalesTable";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { TopProducts } from "@/components/dashboard/TopProducts";
 import { CashboxStatus } from "@/components/dashboard/CashboxStatus";
+import { LowStockAlerts } from "@/components/dashboard/LowStockAlerts";
 import { useDashboard } from "@/hooks/use-dashboard";
+import { useLowStockAlerts } from "@/hooks/use-low-stock-alerts";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
