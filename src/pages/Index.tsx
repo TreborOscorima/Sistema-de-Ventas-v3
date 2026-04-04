@@ -106,6 +106,11 @@ const Dashboard = () => {
       </div>
 
       {/* Quick Actions */}
+      {/* Low Stock Alerts */}
+      {(outOfStock.length > 0 || lowStock.length > 0) && (
+        <LowStockAlerts outOfStock={outOfStock} lowStock={lowStock} />
+      )}
+
       <QuickActions />
 
       {/* Charts & Tables */}
