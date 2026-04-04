@@ -68,32 +68,52 @@ export function TopBar() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5 text-muted-foreground" />
-                <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-destructive">
-                  3
-                </Badge>
+                {totalAlerts > 0 && (
+                  <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-destructive">
+                    {totalAlerts > 9 ? "9+" : totalAlerts}
+                  </Badge>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
               <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-                <span className="font-medium">Stock bajo</span>
-                <span className="text-sm text-muted-foreground">
-                  5 productos con stock crítico
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-                <span className="font-medium">Nueva reserva</span>
-                <span className="text-sm text-muted-foreground">
-                  Cancha 1 reservada para hoy 18:00
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-                <span className="font-medium">Cierre de caja pendiente</span>
-                <span className="text-sm text-muted-foreground">
-                  Recuerda cerrar la caja del turno
-                </span>
-              </DropdownMenuItem>
+              {totalAlerts === 0 ? (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  No hay alertas pendientes
+                </div>
+              ) : (
+                <>
+                  {outOfStock.length > 0 && (
+                    <DropdownMenuItem
+                      className="flex items-start gap-3 py-3 cursor-pointer"
+                      onClick={() => navigate("/productos")}
+                    >
+                      <PackageX className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Productos agotados</span>
+                        <span className="text-sm text-muted-foreground">
+                          {outOfStock.length} producto{outOfStock.length > 1 ? "s" : ""} sin stock
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  )}
+                  {lowStock.length > 0 && (
+                    <DropdownMenuItem
+                      className="flex items-start gap-3 py-3 cursor-pointer"
+                      onClick={() => navigate("/productos")}
+                    >
+                      <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">Stock bajo</span>
+                        <span className="text-sm text-muted-foreground">
+                          {lowStock.length} producto{lowStock.length > 1 ? "s" : ""} con menos de 10 unidades
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
