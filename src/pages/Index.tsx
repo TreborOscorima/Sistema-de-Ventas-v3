@@ -10,11 +10,14 @@ import { RecentSalesTable } from "@/components/dashboard/RecentSalesTable";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { TopProducts } from "@/components/dashboard/TopProducts";
 import { CashboxStatus } from "@/components/dashboard/CashboxStatus";
+import { LowStockAlerts } from "@/components/dashboard/LowStockAlerts";
 import { useDashboard } from "@/hooks/use-dashboard";
+import { useLowStockAlerts } from "@/hooks/use-low-stock-alerts";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
   const { stats, recentSales, cashboxInfo, weeklySales, topProducts, loading } = useDashboard();
+  const { outOfStock, lowStock } = useLowStockAlerts();
 
   const formatCurrency = (value: number) => {
     return `S/ ${value.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -103,6 +106,11 @@ const Dashboard = () => {
       </div>
 
       {/* Quick Actions */}
+      {/* Low Stock Alerts */}
+      {(outOfStock.length > 0 || lowStock.length > 0) && (
+        <LowStockAlerts outOfStock={outOfStock} lowStock={lowStock} />
+      )}
+
       <QuickActions />
 
       {/* Charts & Tables */}
