@@ -42,7 +42,7 @@ export function useLowStockAlerts(refreshKey?: unknown) {
 
   useEffect(() => {
     loadAlerts();
-  }, [loadAlerts]);
+  }, [loadAlerts, refreshKey]);
 
   const outOfStock = lowStockProducts.filter((p) => p.stock === 0);
   const lowStock = lowStockProducts.filter((p) => p.stock > 0);
