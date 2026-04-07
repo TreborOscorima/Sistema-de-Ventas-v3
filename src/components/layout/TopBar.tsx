@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Bell, User, LogOut, Settings, AlertTriangle, PackageX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,8 +32,9 @@ export function TopBar() {
   const { user, signOut } = useAuth();
   const { userRole, company } = useCompany();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const { outOfStock, lowStock, totalAlerts } = useLowStockAlerts();
+  const { outOfStock, lowStock, totalAlerts } = useLowStockAlerts(location.pathname);
 
   const roleLabels: Record<string, string> = {
     owner: 'Dueño',
