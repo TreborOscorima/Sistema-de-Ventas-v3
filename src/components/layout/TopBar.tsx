@@ -32,8 +32,9 @@ export function TopBar() {
   const { user, signOut } = useAuth();
   const { userRole, company } = useCompany();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const { outOfStock, lowStock, totalAlerts } = useLowStockAlerts();
+  const { outOfStock, lowStock, totalAlerts } = useLowStockAlerts(location.pathname);
 
   const roleLabels: Record<string, string> = {
     owner: 'Dueño',
