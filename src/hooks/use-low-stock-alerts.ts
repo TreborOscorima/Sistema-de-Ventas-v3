@@ -11,7 +11,7 @@ export interface LowStockProduct {
 
 const LOW_STOCK_THRESHOLD = 10;
 
-export function useLowStockAlerts() {
+export function useLowStockAlerts(refreshKey?: unknown) {
   const [lowStockProducts, setLowStockProducts] = useState<LowStockProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const { activeBranch } = useCompany();
