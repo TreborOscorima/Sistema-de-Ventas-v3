@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { 
   FileText, Users, DollarSign, AlertTriangle, Download, Search, Filter, 
-  BarChart3, TrendingUp, Tags, Calendar, Banknote, GitCompare,
+  BarChart3, TrendingUp, Tags, Calendar, Banknote, GitCompare, Building2,
   CalendarCheck, Percent, ShoppingCart, Package, Receipt, ClipboardList
 } from 'lucide-react';
 
