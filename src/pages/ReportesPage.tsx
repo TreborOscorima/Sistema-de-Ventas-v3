@@ -94,6 +94,12 @@ export default function ReportesPage() {
     refresh: refreshDetailed
   } = useDetailedSalesReport();
 
+  const {
+    branchData, loading: branchLoading, period: branchPeriod,
+    setPeriod: setBranchPeriod, customRange: branchCustomRange,
+    setCustomRange: setBranchCustomRange, refresh: refreshBranch
+  } = useBranchComparison();
+
   const { allCustomers, loading: customersLoading } = useCustomers();
   const [searchQuery, setSearchQuery] = useState('');
   const [balanceFilter, setBalanceFilter] = useState<string>('all');
@@ -251,6 +257,10 @@ export default function ReportesPage() {
           <TabsTrigger value="purchases" className="gap-2">
             <ShoppingCart className="h-4 w-4" />
             <span className="hidden sm:inline">Compras</span>
+          </TabsTrigger>
+          <TabsTrigger value="branches" className="gap-2">
+            <Building2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Sucursales</span>
           </TabsTrigger>
           <TabsTrigger value="debt" className="gap-2">
             <Users className="h-4 w-4" />
