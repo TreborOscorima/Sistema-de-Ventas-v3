@@ -6,6 +6,7 @@ import { useCashboxReports } from '@/hooks/use-cashbox-reports';
 import { useComparativeReports } from '@/hooks/use-comparative-reports';
 import { usePurchasesReports } from '@/hooks/use-purchases-reports';
 import { useDetailedSalesReport } from '@/hooks/use-detailed-sales-report';
+import { useBranchComparison } from '@/hooks/use-branch-comparison';
 import { useCustomers } from '@/hooks/use-customers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { 
   FileText, Users, DollarSign, AlertTriangle, Download, Search, Filter, 
-  BarChart3, TrendingUp, Tags, Calendar, Banknote, GitCompare,
+  BarChart3, TrendingUp, Tags, Calendar, Banknote, GitCompare, Building2,
   CalendarCheck, Percent, ShoppingCart, Package, Receipt, ClipboardList
 } from 'lucide-react';
 
@@ -43,6 +44,7 @@ import { ProductCostsTable } from '@/components/reports/ProductCostsTable';
 import { TaxBreakdownCard } from '@/components/reports/TaxBreakdownCard';
 import { DetailedTransactionsTable } from '@/components/reports/DetailedTransactionsTable';
 import { EmployeeSalesChart } from '@/components/reports/EmployeeSalesChart';
+import { BranchComparisonChart } from '@/components/reports/BranchComparisonChart';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -91,6 +93,12 @@ export default function ReportesPage() {
     customRange: detailedCustomRange, setCustomRange: setDetailedCustomRange,
     refresh: refreshDetailed
   } = useDetailedSalesReport();
+
+  const {
+    branchData, loading: branchLoading, period: branchPeriod,
+    setPeriod: setBranchPeriod, customRange: branchCustomRange,
+    setCustomRange: setBranchCustomRange, refresh: refreshBranch
+  } = useBranchComparison();
 
   const { allCustomers, loading: customersLoading } = useCustomers();
   const [searchQuery, setSearchQuery] = useState('');
@@ -250,6 +258,10 @@ export default function ReportesPage() {
             <ShoppingCart className="h-4 w-4" />
             <span className="hidden sm:inline">Compras</span>
           </TabsTrigger>
+          <TabsTrigger value="branches" className="gap-2">
+            <Building2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Sucursales</span>
+          </TabsTrigger>
           <TabsTrigger value="debt" className="gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Deudas</span>
@@ -392,6 +404,12 @@ export default function ReportesPage() {
           <div className="flex justify-end">
             <Button variant="outline" onClick={exportPurchasesCSV} disabled={purchasesLoading}><Download className="h-4 w-4 mr-2" />Exportar Compras CSV</Button>
           </div>
+        </TabsContent>
+
+        {/* Branches Tab */}
+        <TabsContent value="branches" className="space-y-6">
+          <PeriodSelector period={branchPeriod} onPeriodChange={setBranchPeriod} customRange={branchCustomRange} onCustomRangeChange={setBranchCustomRange} onRefresh={refreshBranch} loading={branchLoading} />
+          <BranchComparisonChart data={branchData} loading={branchLoading} />
         </TabsContent>
 
         {/* Debt Tab */}
