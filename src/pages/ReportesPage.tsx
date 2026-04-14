@@ -6,6 +6,7 @@ import { useCashboxReports } from '@/hooks/use-cashbox-reports';
 import { useComparativeReports } from '@/hooks/use-comparative-reports';
 import { usePurchasesReports } from '@/hooks/use-purchases-reports';
 import { useDetailedSalesReport } from '@/hooks/use-detailed-sales-report';
+import { useBranchComparison } from '@/hooks/use-branch-comparison';
 import { useCustomers } from '@/hooks/use-customers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -43,6 +44,7 @@ import { ProductCostsTable } from '@/components/reports/ProductCostsTable';
 import { TaxBreakdownCard } from '@/components/reports/TaxBreakdownCard';
 import { DetailedTransactionsTable } from '@/components/reports/DetailedTransactionsTable';
 import { EmployeeSalesChart } from '@/components/reports/EmployeeSalesChart';
+import { BranchComparisonChart } from '@/components/reports/BranchComparisonChart';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
