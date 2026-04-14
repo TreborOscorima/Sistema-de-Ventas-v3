@@ -406,6 +406,12 @@ export default function ReportesPage() {
           </div>
         </TabsContent>
 
+        {/* Branches Tab */}
+        <TabsContent value="branches" className="space-y-6">
+          <PeriodSelector period={branchPeriod} onPeriodChange={setBranchPeriod} customRange={branchCustomRange} onCustomRangeChange={setBranchCustomRange} onRefresh={refreshBranch} loading={branchLoading} />
+          <BranchComparisonChart data={branchData} loading={branchLoading} />
+        </TabsContent>
+
         {/* Debt Tab */}
         <TabsContent value="debt" className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
