@@ -445,11 +445,18 @@ export type Database = {
       customers: {
         Row: {
           address: string | null
+          ar_iva_condition:
+            | Database["public"]["Enums"]["ar_iva_condition"]
+            | null
           balance: number
           branch_id: string | null
           created_at: string
+          doc_number: string | null
+          doc_type: Database["public"]["Enums"]["identity_doc_type"] | null
           email: string | null
+          fiscal_email: string | null
           id: string
+          legal_name: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -458,11 +465,18 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          ar_iva_condition?:
+            | Database["public"]["Enums"]["ar_iva_condition"]
+            | null
           balance?: number
           branch_id?: string | null
           created_at?: string
+          doc_number?: string | null
+          doc_type?: Database["public"]["Enums"]["identity_doc_type"] | null
           email?: string | null
+          fiscal_email?: string | null
           id?: string
+          legal_name?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -471,11 +485,18 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          ar_iva_condition?:
+            | Database["public"]["Enums"]["ar_iva_condition"]
+            | null
           balance?: number
           branch_id?: string | null
           created_at?: string
+          doc_number?: string | null
+          doc_type?: Database["public"]["Enums"]["identity_doc_type"] | null
           email?: string | null
+          fiscal_email?: string | null
           id?: string
+          legal_name?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
@@ -488,6 +509,382 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_series: {
+        Row: {
+          branch_id: string | null
+          company_id: string
+          created_at: string
+          current_number: number
+          document_type: Database["public"]["Enums"]["fiscal_document_type"]
+          id: string
+          is_active: boolean
+          is_default: boolean
+          series: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          company_id: string
+          created_at?: string
+          current_number?: number
+          document_type: Database["public"]["Enums"]["fiscal_document_type"]
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          series: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          company_id?: string
+          created_at?: string
+          current_number?: number
+          document_type?: Database["public"]["Enums"]["fiscal_document_type"]
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          series?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_series_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_series_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      electronic_invoices: {
+        Row: {
+          ar_customer_iva_condition:
+            | Database["public"]["Enums"]["ar_iva_condition"]
+            | null
+          attempts: number
+          branch_id: string | null
+          cae: string | null
+          cae_due_date: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cdr_response: Json | null
+          company_id: string
+          country: Database["public"]["Enums"]["fiscal_country"]
+          created_at: string
+          currency: string
+          customer_address: string | null
+          customer_doc_number: string | null
+          customer_doc_type:
+            | Database["public"]["Enums"]["identity_doc_type"]
+            | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_legal_name: string | null
+          document_type: Database["public"]["Enums"]["fiscal_document_type"]
+          error_code: string | null
+          error_message: string | null
+          full_number: string | null
+          hash: string | null
+          id: string
+          issue_date: string
+          last_attempt_at: string | null
+          metadata: Json | null
+          number: number
+          pdf_url: string | null
+          qr_data: string | null
+          reference_invoice_id: string | null
+          sale_id: string | null
+          series: string
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          total: number
+          updated_at: string
+          user_id: string
+          xml_content: string | null
+        }
+        Insert: {
+          ar_customer_iva_condition?:
+            | Database["public"]["Enums"]["ar_iva_condition"]
+            | null
+          attempts?: number
+          branch_id?: string | null
+          cae?: string | null
+          cae_due_date?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cdr_response?: Json | null
+          company_id: string
+          country: Database["public"]["Enums"]["fiscal_country"]
+          created_at?: string
+          currency?: string
+          customer_address?: string | null
+          customer_doc_number?: string | null
+          customer_doc_type?:
+            | Database["public"]["Enums"]["identity_doc_type"]
+            | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_legal_name?: string | null
+          document_type: Database["public"]["Enums"]["fiscal_document_type"]
+          error_code?: string | null
+          error_message?: string | null
+          full_number?: string | null
+          hash?: string | null
+          id?: string
+          issue_date?: string
+          last_attempt_at?: string | null
+          metadata?: Json | null
+          number: number
+          pdf_url?: string | null
+          qr_data?: string | null
+          reference_invoice_id?: string | null
+          sale_id?: string | null
+          series: string
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          updated_at?: string
+          user_id: string
+          xml_content?: string | null
+        }
+        Update: {
+          ar_customer_iva_condition?:
+            | Database["public"]["Enums"]["ar_iva_condition"]
+            | null
+          attempts?: number
+          branch_id?: string | null
+          cae?: string | null
+          cae_due_date?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cdr_response?: Json | null
+          company_id?: string
+          country?: Database["public"]["Enums"]["fiscal_country"]
+          created_at?: string
+          currency?: string
+          customer_address?: string | null
+          customer_doc_number?: string | null
+          customer_doc_type?:
+            | Database["public"]["Enums"]["identity_doc_type"]
+            | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_legal_name?: string | null
+          document_type?: Database["public"]["Enums"]["fiscal_document_type"]
+          error_code?: string | null
+          error_message?: string | null
+          full_number?: string | null
+          hash?: string | null
+          id?: string
+          issue_date?: string
+          last_attempt_at?: string | null
+          metadata?: Json | null
+          number?: number
+          pdf_url?: string | null
+          qr_data?: string | null
+          reference_invoice_id?: string | null
+          sale_id?: string | null
+          series?: string
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+          xml_content?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "electronic_invoices_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "electronic_invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "electronic_invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "electronic_invoices_reference_invoice_id_fkey"
+            columns: ["reference_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "electronic_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "electronic_invoices_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_settings: {
+        Row: {
+          ar_activity_start: string | null
+          ar_gross_income: string | null
+          ar_iva_condition:
+            | Database["public"]["Enums"]["ar_iva_condition"]
+            | null
+          ar_point_of_sale: number | null
+          auto_send: boolean
+          company_id: string
+          country: Database["public"]["Enums"]["fiscal_country"]
+          created_at: string
+          default_currency: string
+          enabled: boolean
+          fiscal_address: string | null
+          id: string
+          legal_name: string | null
+          mode: Database["public"]["Enums"]["fiscal_mode"]
+          pe_company_code: string | null
+          send_email_to_customer: boolean
+          tax_id: string | null
+          trade_name: string | null
+          ubigeo: string | null
+          updated_at: string
+        }
+        Insert: {
+          ar_activity_start?: string | null
+          ar_gross_income?: string | null
+          ar_iva_condition?:
+            | Database["public"]["Enums"]["ar_iva_condition"]
+            | null
+          ar_point_of_sale?: number | null
+          auto_send?: boolean
+          company_id: string
+          country?: Database["public"]["Enums"]["fiscal_country"]
+          created_at?: string
+          default_currency?: string
+          enabled?: boolean
+          fiscal_address?: string | null
+          id?: string
+          legal_name?: string | null
+          mode?: Database["public"]["Enums"]["fiscal_mode"]
+          pe_company_code?: string | null
+          send_email_to_customer?: boolean
+          tax_id?: string | null
+          trade_name?: string | null
+          ubigeo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ar_activity_start?: string | null
+          ar_gross_income?: string | null
+          ar_iva_condition?:
+            | Database["public"]["Enums"]["ar_iva_condition"]
+            | null
+          ar_point_of_sale?: number | null
+          auto_send?: boolean
+          company_id?: string
+          country?: Database["public"]["Enums"]["fiscal_country"]
+          created_at?: string
+          default_currency?: string
+          enabled?: boolean
+          fiscal_address?: string | null
+          id?: string
+          legal_name?: string | null
+          mode?: Database["public"]["Enums"]["fiscal_mode"]
+          pe_company_code?: string | null
+          send_email_to_customer?: boolean
+          tax_id?: string | null
+          trade_name?: string | null
+          ubigeo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount: number
+          id: string
+          invoice_id: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          total: number
+          unit_code: string | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount?: number
+          id?: string
+          invoice_id: string
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          unit_code?: string | null
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount?: number
+          id?: string
+          invoice_id?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          unit_code?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "electronic_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -1043,6 +1440,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_next_invoice_number: {
+        Args: {
+          _company_id: string
+          _document_type: Database["public"]["Enums"]["fiscal_document_type"]
+          _series: string
+        }
+        Returns: number
+      }
       get_user_role: {
         Args: { _company_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1081,6 +1486,51 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin" | "cashier"
+      ar_iva_condition:
+        | "responsable_inscripto"
+        | "monotributo"
+        | "exento"
+        | "consumidor_final"
+        | "no_responsable"
+        | "no_categorizado"
+      fiscal_country: "PE" | "AR"
+      fiscal_document_type:
+        | "pe_boleta"
+        | "pe_factura"
+        | "pe_nota_credito"
+        | "pe_nota_debito"
+        | "pe_guia_remision"
+        | "ar_factura_a"
+        | "ar_factura_b"
+        | "ar_factura_c"
+        | "ar_factura_e"
+        | "ar_nota_credito_a"
+        | "ar_nota_credito_b"
+        | "ar_nota_credito_c"
+        | "ar_nota_credito_e"
+        | "ar_nota_debito_a"
+        | "ar_nota_debito_b"
+        | "ar_nota_debito_c"
+        | "ar_nota_debito_e"
+      fiscal_mode: "testing" | "production"
+      identity_doc_type:
+        | "pe_dni"
+        | "pe_ruc"
+        | "pe_ce"
+        | "pe_pasaporte"
+        | "pe_sin_doc"
+        | "ar_dni"
+        | "ar_cuit"
+        | "ar_cuil"
+        | "ar_pasaporte"
+        | "ar_cf"
+      invoice_status:
+        | "pending"
+        | "processing"
+        | "accepted"
+        | "rejected"
+        | "cancelled"
+        | "error"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1209,6 +1659,55 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "cashier"],
+      ar_iva_condition: [
+        "responsable_inscripto",
+        "monotributo",
+        "exento",
+        "consumidor_final",
+        "no_responsable",
+        "no_categorizado",
+      ],
+      fiscal_country: ["PE", "AR"],
+      fiscal_document_type: [
+        "pe_boleta",
+        "pe_factura",
+        "pe_nota_credito",
+        "pe_nota_debito",
+        "pe_guia_remision",
+        "ar_factura_a",
+        "ar_factura_b",
+        "ar_factura_c",
+        "ar_factura_e",
+        "ar_nota_credito_a",
+        "ar_nota_credito_b",
+        "ar_nota_credito_c",
+        "ar_nota_credito_e",
+        "ar_nota_debito_a",
+        "ar_nota_debito_b",
+        "ar_nota_debito_c",
+        "ar_nota_debito_e",
+      ],
+      fiscal_mode: ["testing", "production"],
+      identity_doc_type: [
+        "pe_dni",
+        "pe_ruc",
+        "pe_ce",
+        "pe_pasaporte",
+        "pe_sin_doc",
+        "ar_dni",
+        "ar_cuit",
+        "ar_cuil",
+        "ar_pasaporte",
+        "ar_cf",
+      ],
+      invoice_status: [
+        "pending",
+        "processing",
+        "accepted",
+        "rejected",
+        "cancelled",
+        "error",
+      ],
     },
   },
 } as const
