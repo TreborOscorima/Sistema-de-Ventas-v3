@@ -8,8 +8,9 @@ import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { BranchManagement } from "@/components/settings/BranchManagement";
 import { PaymentMethodsSettings } from "@/components/settings/PaymentMethodsSettings";
 import { CurrencySettings } from "@/components/settings/CurrencySettings";
+import { FiscalSettings } from "@/components/settings/FiscalSettings";
 import { useCompany } from "@/contexts/CompanyContext";
-import { User, Building2, Percent, Receipt, Palette, Settings, GitBranch, CreditCard, Globe } from "lucide-react";
+import { User, Building2, Percent, Receipt, Palette, Settings, GitBranch, CreditCard, Globe, FileText } from "lucide-react";
 
 const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -87,6 +88,13 @@ const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
                 <GitBranch className="h-4 w-4" />
                 <span className="hidden sm:inline">Sucursales</span>
               </TabsTrigger>
+              <TabsTrigger 
+                value="fiscal"
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Facturación</span>
+              </TabsTrigger>
             </>
           )}
         </TabsList>
@@ -121,6 +129,9 @@ const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
             </TabsContent>
             <TabsContent value="branches" className="mt-6">
               <BranchManagement />
+            </TabsContent>
+            <TabsContent value="fiscal" className="mt-6">
+              <FiscalSettings />
             </TabsContent>
           </>
         )}
