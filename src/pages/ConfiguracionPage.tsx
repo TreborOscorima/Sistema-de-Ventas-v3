@@ -29,7 +29,7 @@ const ConfiguracionPage = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8 h-auto gap-2 bg-transparent p-0">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-9 h-auto gap-2 bg-transparent p-0">
           <TabsTrigger 
             value="profile" 
             className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
