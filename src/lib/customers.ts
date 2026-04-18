@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { ArIvaCondition, IdentityDocType } from './fiscal';
 
 export interface Customer {
   id: string;
