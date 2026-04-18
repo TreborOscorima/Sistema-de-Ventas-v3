@@ -11,6 +11,11 @@ export interface Customer {
   balance: number;
   created_at: string;
   updated_at: string;
+  doc_type?: string | null;
+  doc_number?: string | null;
+  legal_name?: string | null;
+  fiscal_email?: string | null;
+  ar_iva_condition?: string | null;
 }
 
 export interface CustomerWithSales extends Customer {
@@ -57,7 +62,12 @@ export async function createCustomer(
     phone: customer.phone,
     address: customer.address,
     notes: customer.notes,
-    balance: customer.balance
+    balance: customer.balance,
+    doc_type: customer.doc_type ?? null,
+    doc_number: customer.doc_number ?? null,
+    legal_name: customer.legal_name ?? null,
+    fiscal_email: customer.fiscal_email ?? null,
+    ar_iva_condition: customer.ar_iva_condition ?? null,
   };
   if (branchId) insertData.branch_id = branchId;
 

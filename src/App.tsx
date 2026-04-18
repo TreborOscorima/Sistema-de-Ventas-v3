@@ -21,6 +21,7 @@ import ReportesPage from "./pages/ReportesPage";
 import ClientesPage from "./pages/ClientesPage";
 import ConfiguracionPage from "./pages/ConfiguracionPage";
 import ComprasPage from "./pages/ComprasPage";
+import ComprobantesPage from "./pages/ComprobantesPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import NotFound from "./pages/NotFound";
 
@@ -73,6 +74,9 @@ const App = () => (
                     </Route>
                     <Route element={<PermissionRoute module="compras" />}>
                       <Route path="/compras" element={<ComprasPage />} />
+                    </Route>
+                    <Route element={<PermissionRoute module="comprobantes" />}>
+                      <Route path="/comprobantes" element={<ComprobantesPage />} />
                     </Route>
                   </Route>
                 </Route>
