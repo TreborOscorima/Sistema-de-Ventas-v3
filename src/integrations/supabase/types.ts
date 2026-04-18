@@ -1467,6 +1467,13 @@ export type Database = {
         }
         Returns: Json
       }
+      seed_default_document_series: {
+        Args: {
+          _company_id: string
+          _country: Database["public"]["Enums"]["fiscal_country"]
+        }
+        Returns: undefined
+      }
       seed_default_payment_methods: {
         Args: { _company_id: string }
         Returns: undefined
