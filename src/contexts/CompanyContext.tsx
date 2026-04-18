@@ -52,6 +52,7 @@ export const ALL_MODULES = [
   { key: 'caja', label: 'Caja' },
   { key: 'reservas', label: 'Reservas' },
   { key: 'reportes', label: 'Reportes' },
+  { key: 'comprobantes', label: 'Comprobantes' },
   { key: 'configuracion', label: 'Configuración' },
 ] as const;
 

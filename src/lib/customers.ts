@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { ArIvaCondition, IdentityDocType } from './fiscal';
 
 export interface Customer {
   id: string;
@@ -11,6 +12,11 @@ export interface Customer {
   balance: number;
   created_at: string;
   updated_at: string;
+  doc_type?: IdentityDocType | null;
+  doc_number?: string | null;
+  legal_name?: string | null;
+  fiscal_email?: string | null;
+  ar_iva_condition?: ArIvaCondition | null;
 }
 
 export interface CustomerWithSales extends Customer {
@@ -57,7 +63,12 @@ export async function createCustomer(
     phone: customer.phone,
     address: customer.address,
     notes: customer.notes,
-    balance: customer.balance
+    balance: customer.balance,
+    doc_type: customer.doc_type ?? null,
+    doc_number: customer.doc_number ?? null,
+    legal_name: customer.legal_name ?? null,
+    fiscal_email: customer.fiscal_email ?? null,
+    ar_iva_condition: customer.ar_iva_condition ?? null,
   };
   if (branchId) insertData.branch_id = branchId;
 
@@ -77,7 +88,7 @@ export async function updateCustomer(
 ): Promise<Customer> {
   const { data, error } = await supabase
     .from('customers')
-    .update(updates)
+    .update(updates as any)
     .eq('id', customerId)
     .select()
     .single();

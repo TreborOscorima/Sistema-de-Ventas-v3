@@ -15,6 +15,7 @@ import {
   BarChart3,
   Box,
   Truck,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ const navigation: NavItem[] = [
   { name: "Caja", href: "/caja", icon: Wallet, module: "caja" },
   { name: "Reservas", href: "/reservas", icon: Calendar, module: "reservas" },
   { name: "Reportes", href: "/reportes", icon: BarChart3, module: "reportes" },
+  { name: "Comprobantes", href: "/comprobantes", icon: FileText, module: "comprobantes" },
   { name: "Configuración", href: "/configuracion", icon: Settings, module: "configuracion" },
 ];
 
