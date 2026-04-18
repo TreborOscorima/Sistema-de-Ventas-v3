@@ -12,11 +12,11 @@ export interface Customer {
   balance: number;
   created_at: string;
   updated_at: string;
-  doc_type?: string | null;
+  doc_type?: IdentityDocType | null;
   doc_number?: string | null;
   legal_name?: string | null;
   fiscal_email?: string | null;
-  ar_iva_condition?: string | null;
+  ar_iva_condition?: ArIvaCondition | null;
 }
 
 export interface CustomerWithSales extends Customer {
@@ -88,7 +88,7 @@ export async function updateCustomer(
 ): Promise<Customer> {
   const { data, error } = await supabase
     .from('customers')
-    .update(updates)
+    .update(updates as any)
     .eq('id', customerId)
     .select()
     .single();
