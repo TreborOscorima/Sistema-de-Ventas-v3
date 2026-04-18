@@ -10,12 +10,17 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Save, FileText, AlertTriangle, CheckCircle2, FlaskConical, Building2 } from "lucide-react";
 import { useFiscalSettings, useUpdateFiscalSettings } from "@/hooks/use-fiscal-settings";
+import { useSeedDefaultSeries } from "@/hooks/use-invoices";
+import { useCompany } from "@/contexts/CompanyContext";
 import { AR_IVA_LABELS, ArIvaCondition, FiscalCountry, FiscalMode, validateRUC, validateCUIT } from "@/lib/fiscal";
 import { DocumentSeriesManager } from "./DocumentSeriesManager";
+import { Sparkles } from "lucide-react";
 
 export function FiscalSettings() {
   const { data: settings, isLoading } = useFiscalSettings();
   const update = useUpdateFiscalSettings();
+  const seedSeries = useSeedDefaultSeries();
+  const { company } = useCompany();
 
   const [enabled, setEnabled] = useState(false);
   const [country, setCountry] = useState<FiscalCountry>("PE");
@@ -278,7 +283,19 @@ export function FiscalSettings() {
           <TabsTrigger value="series">Series y correlativos</TabsTrigger>
           <TabsTrigger value="credentials">Credenciales del PSE</TabsTrigger>
         </TabsList>
-        <TabsContent value="series">
+        <TabsContent value="series" className="space-y-3">
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled={!company || seedSeries.isPending}
+              onClick={() => company && seedSeries.mutate({ companyId: company.id, country })}
+            >
+              <Sparkles className="h-4 w-4" />
+              Crear series por defecto
+            </Button>
+          </div>
           <DocumentSeriesManager country={country} />
         </TabsContent>
         <TabsContent value="credentials">
