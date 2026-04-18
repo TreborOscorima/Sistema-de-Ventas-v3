@@ -166,6 +166,44 @@ export default function POSPage() {
       };
       setReceiptSaleData(saleData);
       setShowReceipt(true);
+
+      // Emisión electrónica si está habilitada y se eligió tipo de comprobante
+      if (
+        fiscalEnabled &&
+        fiscalDocType !== 'none' &&
+        company?.id &&
+        receiptData.products.length > 0 &&
+        (result as any).id
+      ) {
+        const serie = availableDocTypes.find(d => d.docType === fiscalDocType)?.series;
+        if (serie) {
+          const docType = fiscalDocType;
+          const customerDocType = selectedCustomer?.doc_type
+            || (docType === 'pe_factura' ? 'pe_ruc' : 'pe_dni');
+          emitInvoice.mutate({
+            company_id: company.id,
+            sale_id: (result as any).id,
+            document_type: docType,
+            series: serie,
+            customer: {
+              id: selectedCustomer?.id || null,
+              doc_type: customerDocType as any,
+              doc_number: selectedCustomer?.doc_number || '00000000',
+              legal_name: selectedCustomer?.legal_name || selectedCustomer?.name || 'Cliente Varios',
+              address: selectedCustomer?.address || undefined,
+              email: selectedCustomer?.fiscal_email || selectedCustomer?.email || undefined,
+            },
+            currency: currencyCode,
+            items: receiptData.products.map(p => ({
+              product_id: p.id,
+              product_name: p.name,
+              quantity: p.quantity,
+              unit_price: p.price,
+              tax_rate: taxRate,
+            })),
+          });
+        }
+      }
     }
   };
 
@@ -514,6 +552,29 @@ export default function POSPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Selector de comprobante fiscal */}
+            {fiscalEnabled && hasProducts && availableDocTypes.length > 0 && (
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <Select
+                  value={fiscalDocType}
+                  onValueChange={(v) => setFiscalDocType(v as FiscalDocumentType | 'none')}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Tipo de comprobante" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin comprobante electrónico</SelectItem>
+                    {availableDocTypes.map(({ docType, series }) => (
+                      <SelectItem key={docType} value={docType}>
+                        {DOCUMENT_TYPE_LABELS[docType]} ({series})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Credit Sale Toggle - Only for product sales */}
             {hasProducts && selectedCustomer && (
