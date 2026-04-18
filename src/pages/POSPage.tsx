@@ -43,6 +43,10 @@ import { useActivePaymentMethods } from "@/hooks/use-payment-methods";
 import { PaymentMethodIcon } from "@/components/settings/PaymentMethodsSettings";
 import { useCompany } from "@/contexts/CompanyContext";
 import { getCurrencySymbol, formatCurrency as fmtCurrency } from "@/lib/currency";
+import { useFiscalSettings, useDocumentSeries } from "@/hooks/use-fiscal-settings";
+import { useEmitInvoice } from "@/hooks/use-invoices";
+import { DOCUMENT_TYPE_LABELS, type FiscalDocumentType } from "@/lib/fiscal";
+import { FileText } from "lucide-react";
 
 interface ReceiptSaleData {
   id: string;
@@ -96,6 +100,22 @@ export default function POSPage() {
   const currencyCode = company?.currency || 'PEN';
   const currencySymbol = getCurrencySymbol(currencyCode);
   const { data: activePaymentMethods = [] } = useActivePaymentMethods();
+  const { data: fiscalSettings } = useFiscalSettings();
+  const { data: documentSeries = [] } = useDocumentSeries();
+  const emitInvoice = useEmitInvoice();
+  const fiscalEnabled = !!fiscalSettings?.enabled;
+  const fiscalCountry = fiscalSettings?.country || 'PE';
+  const taxRate = Number(company?.tax_rate || 18);
+
+  const availableDocTypes = documentSeries
+    .filter(s => s.is_active)
+    .reduce<Array<{ docType: FiscalDocumentType; series: string }>>((acc, s) => {
+      if (!acc.find(a => a.docType === s.document_type)) {
+        acc.push({ docType: s.document_type, series: s.series });
+      }
+      return acc;
+    }, []);
+  const [fiscalDocType, setFiscalDocType] = useState<FiscalDocumentType | 'none'>('none');
 
   const [searchTerm, setSearchTerm] = useState("");
   const [reservationSearchTerm, setReservationSearchTerm] = useState("");
