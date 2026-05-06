@@ -203,6 +203,40 @@ Deno.serve(async (req) => {
 
     const fullNumber = `${payload.series}-${nextNumber}`;
 
+    // Resolver referencia para NC/ND
+    let referenceInvoice: any = null;
+    const isNote =
+      payload.document_type === "pe_nota_credito" ||
+      payload.document_type === "pe_nota_debito";
+    if (isNote) {
+      if (!payload.reference_invoice_id) {
+        return new Response(
+          JSON.stringify({
+            error: "Las notas requieren reference_invoice_id",
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      const { data: ref } = await supabase
+        .from("electronic_invoices")
+        .select("*")
+        .eq("id", payload.reference_invoice_id)
+        .maybeSingle();
+      if (!ref) {
+        return new Response(
+          JSON.stringify({ error: "Comprobante referenciado no encontrado" }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      referenceInvoice = ref;
+    }
+
     // Crear registro pendiente
     const { data: invoice, error: insErr } = await supabase
       .from("electronic_invoices")
@@ -230,7 +264,20 @@ Deno.serve(async (req) => {
         status: "processing",
         attempts: 1,
         last_attempt_at: new Date().toISOString(),
-        metadata: payload.metadata ?? {},
+        reference_invoice_id: payload.reference_invoice_id ?? null,
+        metadata: {
+          ...(payload.metadata ?? {}),
+          ...(isNote
+            ? {
+                note_type_code:
+                  payload.note_type_code ??
+                  (payload.document_type === "pe_nota_credito" ? 1 : 1),
+                note_reason: payload.note_reason ?? "",
+                ref_full_number: referenceInvoice?.full_number,
+                ref_document_type: referenceInvoice?.document_type,
+              }
+            : {}),
+        },
       })
       .select()
       .single();
