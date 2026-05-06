@@ -29,14 +29,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, FileText, Download, Ban, Search } from "lucide-react";
+import { Loader2, FileText, Download, Ban, Search, FilePlus, FileMinus } from "lucide-react";
 import { useInvoices, useCancelInvoice } from "@/hooks/use-invoices";
 import {
   DOCUMENT_TYPE_LABELS,
   STATUS_LABELS,
+  type ElectronicInvoice,
   type FiscalDocumentType,
   type InvoiceStatus,
 } from "@/lib/fiscal";
+import { IssueNoteDialog } from "@/components/invoices/IssueNoteDialog";
 import { useCompany } from "@/contexts/CompanyContext";
 import { formatCurrency } from "@/lib/currency";
 
