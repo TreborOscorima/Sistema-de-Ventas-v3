@@ -229,6 +229,36 @@ Deno.serve(async (req) => {
 
     const fullNumber = `${payload.series}-${String(nextNumber).padStart(8, "0")}`;
 
+    // Resolver referencia para NC/ND
+    const isNote = payload.document_type.startsWith("ar_nota_");
+    let referenceInvoice: any = null;
+    if (isNote) {
+      if (!payload.reference_invoice_id) {
+        return new Response(
+          JSON.stringify({ error: "Las notas requieren reference_invoice_id" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      const { data: ref } = await supabase
+        .from("electronic_invoices")
+        .select("*")
+        .eq("id", payload.reference_invoice_id)
+        .maybeSingle();
+      if (!ref) {
+        return new Response(
+          JSON.stringify({ error: "Comprobante referenciado no encontrado" }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      referenceInvoice = ref;
+    }
+
     const { data: invoice, error: insErr } = await supabase
       .from("electronic_invoices")
       .insert({
@@ -256,10 +286,22 @@ Deno.serve(async (req) => {
         status: "processing",
         attempts: 1,
         last_attempt_at: new Date().toISOString(),
+        reference_invoice_id: payload.reference_invoice_id ?? null,
         metadata: {
           ...(payload.metadata ?? {}),
           afip_cbte_tipo: AFIP_CBTE_TIPO[payload.document_type],
           afip_doc_tipo: AFIP_DOC_TIPO[payload.customer.doc_type],
+          ...(isNote
+            ? {
+                note_reason: payload.note_reason ?? "",
+                ref_full_number: referenceInvoice?.full_number,
+                ref_document_type: referenceInvoice?.document_type,
+                ref_afip_cbte_tipo:
+                  AFIP_CBTE_TIPO[
+                    referenceInvoice?.document_type as ArDocType
+                  ],
+              }
+            : {}),
         },
       })
       .select()
