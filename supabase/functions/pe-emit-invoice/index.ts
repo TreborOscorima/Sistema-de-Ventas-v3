@@ -50,6 +50,10 @@ interface EmitPayload {
   items: InvoiceItemPayload[];
   observations?: string;
   metadata?: Record<string, unknown>;
+  // Para NC/ND
+  reference_invoice_id?: string | null;
+  note_type_code?: number; // SUNAT catálogo 09 (NC) o 10 (ND)
+  note_reason?: string;
 }
 
 function totals(items: InvoiceItemPayload[]) {
@@ -199,6 +203,40 @@ Deno.serve(async (req) => {
 
     const fullNumber = `${payload.series}-${nextNumber}`;
 
+    // Resolver referencia para NC/ND
+    let referenceInvoice: any = null;
+    const isNote =
+      payload.document_type === "pe_nota_credito" ||
+      payload.document_type === "pe_nota_debito";
+    if (isNote) {
+      if (!payload.reference_invoice_id) {
+        return new Response(
+          JSON.stringify({
+            error: "Las notas requieren reference_invoice_id",
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      const { data: ref } = await supabase
+        .from("electronic_invoices")
+        .select("*")
+        .eq("id", payload.reference_invoice_id)
+        .maybeSingle();
+      if (!ref) {
+        return new Response(
+          JSON.stringify({ error: "Comprobante referenciado no encontrado" }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      referenceInvoice = ref;
+    }
+
     // Crear registro pendiente
     const { data: invoice, error: insErr } = await supabase
       .from("electronic_invoices")
@@ -226,7 +264,20 @@ Deno.serve(async (req) => {
         status: "processing",
         attempts: 1,
         last_attempt_at: new Date().toISOString(),
-        metadata: payload.metadata ?? {},
+        reference_invoice_id: payload.reference_invoice_id ?? null,
+        metadata: {
+          ...(payload.metadata ?? {}),
+          ...(isNote
+            ? {
+                note_type_code:
+                  payload.note_type_code ??
+                  (payload.document_type === "pe_nota_credito" ? 1 : 1),
+                note_reason: payload.note_reason ?? "",
+                ref_full_number: referenceInvoice?.full_number,
+                ref_document_type: referenceInvoice?.document_type,
+              }
+            : {}),
+        },
       })
       .select()
       .single();
@@ -317,6 +368,25 @@ Deno.serve(async (req) => {
       enviar_automaticamente_a_la_sunat: true,
       enviar_automaticamente_al_cliente: !!payload.customer.email,
       formato_de_pdf: "TICKET",
+      ...(isNote && referenceInvoice
+        ? {
+            tipo_de_nota_de_credito:
+              payload.document_type === "pe_nota_credito"
+                ? (payload.note_type_code ?? 1)
+                : undefined,
+            tipo_de_nota_de_debito:
+              payload.document_type === "pe_nota_debito"
+                ? (payload.note_type_code ?? 1)
+                : undefined,
+            motivo: payload.note_reason || "",
+            serie_del_documento_que_se_modifica: referenceInvoice.series,
+            numero_del_documento_que_se_modifica: String(referenceInvoice.number),
+            tipo_de_documento_que_se_modifica:
+              NUBEFACT_DOC_TYPE_MAP[
+                referenceInvoice.document_type as keyof typeof NUBEFACT_DOC_TYPE_MAP
+              ],
+          }
+        : {}),
       items: payload.items.map((it) => {
         const lineSubtotal =
           (it.quantity * it.unit_price) - (it.discount || 0);

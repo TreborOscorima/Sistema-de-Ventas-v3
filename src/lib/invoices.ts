@@ -33,6 +33,9 @@ export interface EmitInvoiceInput {
   }>;
   observations?: string;
   metadata?: Record<string, unknown>;
+  reference_invoice_id?: string | null;
+  note_type_code?: number;
+  note_reason?: string;
 }
 
 export interface EmitInvoiceResult {

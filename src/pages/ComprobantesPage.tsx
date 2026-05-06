@@ -29,14 +29,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, FileText, Download, Ban, Search } from "lucide-react";
+import { Loader2, FileText, Download, Ban, Search, FilePlus, FileMinus } from "lucide-react";
 import { useInvoices, useCancelInvoice } from "@/hooks/use-invoices";
 import {
   DOCUMENT_TYPE_LABELS,
   STATUS_LABELS,
+  type ElectronicInvoice,
   type FiscalDocumentType,
   type InvoiceStatus,
 } from "@/lib/fiscal";
+import { IssueNoteDialog } from "@/components/invoices/IssueNoteDialog";
 import { useCompany } from "@/contexts/CompanyContext";
 import { formatCurrency } from "@/lib/currency";
 
@@ -50,6 +52,10 @@ export default function ComprobantesPage() {
     full: string;
   } | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [noteTarget, setNoteTarget] = useState<{
+    invoice: ElectronicInvoice;
+    kind: "credit" | "debit";
+  } | null>(null);
 
   const filters = useMemo(
     () => ({
@@ -231,6 +237,31 @@ export default function ComprobantesPage() {
                                 </a>
                               </Button>
                             )}
+                            {inv.status === "accepted" &&
+                              !inv.document_type.includes("nota") && (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    title="Emitir Nota de Crédito"
+                                    onClick={() =>
+                                      setNoteTarget({ invoice: inv, kind: "credit" })
+                                    }
+                                  >
+                                    <FileMinus className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    title="Emitir Nota de Débito"
+                                    onClick={() =>
+                                      setNoteTarget({ invoice: inv, kind: "debit" })
+                                    }
+                                  >
+                                    <FilePlus className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
                             {inv.status === "accepted" && (
                               <Button
                                 size="icon"
@@ -292,6 +323,13 @@ export default function ComprobantesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <IssueNoteDialog
+        invoice={noteTarget?.invoice ?? null}
+        noteKind={noteTarget?.kind ?? "credit"}
+        open={!!noteTarget}
+        onOpenChange={(o) => !o && setNoteTarget(null)}
+      />
     </div>
   );
 }
