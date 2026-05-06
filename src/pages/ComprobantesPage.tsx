@@ -52,6 +52,10 @@ export default function ComprobantesPage() {
     full: string;
   } | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [noteTarget, setNoteTarget] = useState<{
+    invoice: ElectronicInvoice;
+    kind: "credit" | "debit";
+  } | null>(null);
 
   const filters = useMemo(
     () => ({
