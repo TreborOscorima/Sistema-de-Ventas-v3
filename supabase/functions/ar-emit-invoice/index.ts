@@ -72,6 +72,8 @@ interface EmitPayload {
   items: InvoiceItemPayload[];
   observations?: string;
   metadata?: Record<string, unknown>;
+  reference_invoice_id?: string | null;
+  note_reason?: string;
 }
 
 // AFIP CbteTipo (códigos oficiales WSFE)
