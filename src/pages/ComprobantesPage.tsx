@@ -323,6 +323,13 @@ export default function ComprobantesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <IssueNoteDialog
+        invoice={noteTarget?.invoice ?? null}
+        noteKind={noteTarget?.kind ?? "credit"}
+        open={!!noteTarget}
+        onOpenChange={(o) => !o && setNoteTarget(null)}
+      />
     </div>
   );
 }
