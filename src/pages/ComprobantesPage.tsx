@@ -237,6 +237,31 @@ export default function ComprobantesPage() {
                                 </a>
                               </Button>
                             )}
+                            {inv.status === "accepted" &&
+                              !inv.document_type.includes("nota") && (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    title="Emitir Nota de Crédito"
+                                    onClick={() =>
+                                      setNoteTarget({ invoice: inv, kind: "credit" })
+                                    }
+                                  >
+                                    <FileMinus className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    title="Emitir Nota de Débito"
+                                    onClick={() =>
+                                      setNoteTarget({ invoice: inv, kind: "debit" })
+                                    }
+                                  >
+                                    <FilePlus className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
                             {inv.status === "accepted" && (
                               <Button
                                 size="icon"
