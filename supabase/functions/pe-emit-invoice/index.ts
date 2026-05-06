@@ -50,6 +50,10 @@ interface EmitPayload {
   items: InvoiceItemPayload[];
   observations?: string;
   metadata?: Record<string, unknown>;
+  // Para NC/ND
+  reference_invoice_id?: string | null;
+  note_type_code?: number; // SUNAT catálogo 09 (NC) o 10 (ND)
+  note_reason?: string;
 }
 
 function totals(items: InvoiceItemPayload[]) {
