@@ -368,6 +368,25 @@ Deno.serve(async (req) => {
       enviar_automaticamente_a_la_sunat: true,
       enviar_automaticamente_al_cliente: !!payload.customer.email,
       formato_de_pdf: "TICKET",
+      ...(isNote && referenceInvoice
+        ? {
+            tipo_de_nota_de_credito:
+              payload.document_type === "pe_nota_credito"
+                ? (payload.note_type_code ?? 1)
+                : undefined,
+            tipo_de_nota_de_debito:
+              payload.document_type === "pe_nota_debito"
+                ? (payload.note_type_code ?? 1)
+                : undefined,
+            motivo: payload.note_reason || "",
+            serie_del_documento_que_se_modifica: referenceInvoice.series,
+            numero_del_documento_que_se_modifica: String(referenceInvoice.number),
+            tipo_de_documento_que_se_modifica:
+              NUBEFACT_DOC_TYPE_MAP[
+                referenceInvoice.document_type as keyof typeof NUBEFACT_DOC_TYPE_MAP
+              ],
+          }
+        : {}),
       items: payload.items.map((it) => {
         const lineSubtotal =
           (it.quantity * it.unit_price) - (it.discount || 0);
