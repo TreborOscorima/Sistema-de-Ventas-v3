@@ -29,8 +29,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, FileText, Download, Ban, Search, FilePlus, FileMinus } from "lucide-react";
+import { Loader2, FileText, Download, Ban, Search, FilePlus, FileMinus, Printer } from "lucide-react";
 import { useInvoices, useCancelInvoice } from "@/hooks/use-invoices";
+import { useFiscalSettings } from "@/hooks/use-fiscal-settings";
+import { useBusinessSettings } from "@/hooks/use-settings";
+import { printFiscalReceipt } from "@/lib/fiscal-pdf";
+import { useToast } from "@/hooks/use-toast";
 import {
   DOCUMENT_TYPE_LABELS,
   STATUS_LABELS,
@@ -68,6 +72,25 @@ export default function ComprobantesPage() {
 
   const { data: invoices = [], isLoading } = useInvoices(filters);
   const cancelMut = useCancelInvoice();
+  const { data: fiscal } = useFiscalSettings();
+  const { data: business } = useBusinessSettings();
+  const { toast } = useToast();
+
+  const handlePrint = async (inv: ElectronicInvoice) => {
+    try {
+      await printFiscalReceipt({
+        invoice: inv,
+        issuerTaxId: fiscal?.tax_id || business?.tax_id || null,
+        settings: business ?? null,
+      });
+    } catch (e) {
+      toast({
+        title: "Error al imprimir",
+        description: e instanceof Error ? e.message : "Error desconocido",
+        variant: "destructive",
+      });
+    }
+  };
 
   const allDocTypes = Object.keys(
     DOCUMENT_TYPE_LABELS,
@@ -221,6 +244,14 @@ export default function ComprobantesPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              title="Imprimir comprobante con QR"
+                              onClick={() => handlePrint(inv)}
+                            >
+                              <Printer className="h-4 w-4" />
+                            </Button>
                             {inv.pdf_url && (
                               <Button
                                 size="icon"
