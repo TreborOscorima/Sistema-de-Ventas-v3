@@ -297,7 +297,7 @@ export default function ComprobantesPage() {
                                   </Button>
                                 </>
                               )}
-                            {inv.status === "accepted" && (
+                            {(inv.status === "accepted" || inv.status === "pending") && (
                               <Button
                                 size="icon"
                                 variant="ghost"
@@ -306,6 +306,7 @@ export default function ComprobantesPage() {
                                   setCancelTarget({
                                     id: inv.id,
                                     full: inv.full_number || inv.id,
+                                    country: inv.country as "PE" | "AR",
                                   })
                                 }
                               >
