@@ -103,9 +103,11 @@ export default function ComprobantesPage() {
     await cancelMut.mutateAsync({
       id: cancelTarget.id,
       reason: cancelReason.trim(),
+      force: cancelTarget.country === "AR" ? cancelForce : undefined,
     });
     setCancelTarget(null);
     setCancelReason("");
+    setCancelForce(false);
   };
 
   return (
