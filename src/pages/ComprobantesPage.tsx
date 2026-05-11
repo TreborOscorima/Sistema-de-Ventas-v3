@@ -54,8 +54,10 @@ export default function ComprobantesPage() {
   const [cancelTarget, setCancelTarget] = useState<{
     id: string;
     full: string;
+    country: "PE" | "AR";
   } | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [cancelForce, setCancelForce] = useState(false);
   const [noteTarget, setNoteTarget] = useState<{
     invoice: ElectronicInvoice;
     kind: "credit" | "debit";
@@ -101,9 +103,11 @@ export default function ComprobantesPage() {
     await cancelMut.mutateAsync({
       id: cancelTarget.id,
       reason: cancelReason.trim(),
+      force: cancelTarget.country === "AR" ? cancelForce : undefined,
     });
     setCancelTarget(null);
     setCancelReason("");
+    setCancelForce(false);
   };
 
   return (
@@ -293,7 +297,7 @@ export default function ComprobantesPage() {
                                   </Button>
                                 </>
                               )}
-                            {inv.status === "accepted" && (
+                            {(inv.status === "accepted" || inv.status === "pending") && (
                               <Button
                                 size="icon"
                                 variant="ghost"
@@ -302,6 +306,7 @@ export default function ComprobantesPage() {
                                   setCancelTarget({
                                     id: inv.id,
                                     full: inv.full_number || inv.id,
+                                    country: inv.country as "PE" | "AR",
                                   })
                                 }
                               >
@@ -330,18 +335,33 @@ export default function ComprobantesPage() {
               Anular comprobante {cancelTarget?.full}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción marcará el comprobante como anulado en el sistema.
-              Recuerda que también debes comunicarlo a SUNAT/AFIP según
-              corresponda.
+              {cancelTarget?.country === "PE"
+                ? "Se enviará la comunicación de baja a SUNAT vía Nubefact. Si no hay credenciales configuradas, la solicitud queda registrada como pendiente."
+                : "AFIP no permite anular un comprobante autorizado: la anulación se realiza emitiendo una Nota de Crédito por el total. Esta acción registra la intención de anulación."}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="space-y-2">
-            <Label>Motivo *</Label>
-            <Input
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-              placeholder="Motivo de la anulación"
-            />
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>Motivo *</Label>
+              <Input
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Motivo de la anulación"
+              />
+            </div>
+            {cancelTarget?.country === "AR" && (
+              <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={cancelForce}
+                  onChange={(e) => setCancelForce(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>
+                  Marcar como anulado localmente de inmediato (recuerda emitir la Nota de Crédito por el total ante AFIP).
+                </span>
+              </label>
+            )}
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>

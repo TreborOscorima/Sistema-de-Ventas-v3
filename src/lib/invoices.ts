@@ -110,19 +110,30 @@ export async function getInvoiceById(
   return data as ElectronicInvoice | null;
 }
 
+export interface CancelInvoiceResult {
+  ok: boolean;
+  status?: string;
+  pending?: boolean;
+  message?: string;
+  ticket?: string | null;
+  error?: unknown;
+}
+
 export async function cancelInvoice(
   id: string,
   reason: string,
-): Promise<void> {
-  const { error } = await supabase
-    .from("electronic_invoices")
-    .update({
-      status: "cancelled",
-      cancelled_at: new Date().toISOString(),
-      cancellation_reason: reason,
-    })
-    .eq("id", id);
-  if (error) throw error;
+  opts: { force?: boolean } = {},
+): Promise<CancelInvoiceResult> {
+  // Detectar país a partir del comprobante
+  const inv = await getInvoiceById(id);
+  if (!inv) throw new Error("Comprobante no encontrado");
+
+  const fnName = inv.country === "PE" ? "pe-cancel-invoice" : "ar-cancel-invoice";
+  const { data, error } = await supabase.functions.invoke(fnName, {
+    body: { invoice_id: id, reason, force: opts.force ?? false },
+  });
+  if (error) throw new Error(error.message || "Error al anular comprobante");
+  return data as CancelInvoiceResult;
 }
 
 export async function seedDefaultSeries(
