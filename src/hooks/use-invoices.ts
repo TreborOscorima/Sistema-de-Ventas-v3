@@ -61,11 +61,30 @@ export function useCancelInvoice() {
   const qc = useQueryClient();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
-      cancelInvoice(id, reason),
-    onSuccess: () => {
+    mutationFn: ({
+      id,
+      reason,
+      force,
+    }: {
+      id: string;
+      reason: string;
+      force?: boolean;
+    }) => cancelInvoice(id, reason, { force }),
+    onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["electronic-invoices"] });
-      toast({ title: "Comprobante anulado" });
+      if (res.pending) {
+        toast({
+          title: "Anulación registrada",
+          description:
+            res.message ||
+            "Pendiente de envío al organismo fiscal. Configura las credenciales para completarla.",
+        });
+      } else {
+        toast({
+          title: "Comprobante anulado",
+          description: res.message || "La anulación fue procesada correctamente.",
+        });
+      }
     },
     onError: (err) =>
       toast({
