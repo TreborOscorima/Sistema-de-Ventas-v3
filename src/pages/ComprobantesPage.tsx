@@ -54,8 +54,10 @@ export default function ComprobantesPage() {
   const [cancelTarget, setCancelTarget] = useState<{
     id: string;
     full: string;
+    country: "PE" | "AR";
   } | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [cancelForce, setCancelForce] = useState(false);
   const [noteTarget, setNoteTarget] = useState<{
     invoice: ElectronicInvoice;
     kind: "credit" | "debit";
