@@ -183,11 +183,36 @@ export default function ComprobantesPage() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Comprobantes ({invoices.length})
           </CardTitle>
+          {(() => {
+            const retryable = invoices.filter(
+              (i) =>
+                ["pending", "rejected", "error"].includes(i.status) ||
+                (i.metadata as any)?.cancellation_pending === true,
+            );
+            if (!retryable.length) return null;
+            return (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={retryMut.isPending}
+                onClick={() =>
+                  retryMut.mutate(retryable.map((i) => i.id))
+                }
+              >
+                {retryMut.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Reintentar pendientes ({retryable.length})
+              </Button>
+            );
+          })()}
         </CardHeader>
         <CardContent>
           {isLoading ? (
