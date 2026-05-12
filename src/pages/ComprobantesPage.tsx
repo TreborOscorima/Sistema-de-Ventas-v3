@@ -29,8 +29,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, FileText, Download, Ban, Search, FilePlus, FileMinus, Printer } from "lucide-react";
-import { useInvoices, useCancelInvoice } from "@/hooks/use-invoices";
+import { Loader2, FileText, Download, Ban, Search, FilePlus, FileMinus, Printer, RefreshCw } from "lucide-react";
+import { useInvoices, useCancelInvoice, useRetryInvoices } from "@/hooks/use-invoices";
 import { useFiscalSettings } from "@/hooks/use-fiscal-settings";
 import { useBusinessSettings } from "@/hooks/use-settings";
 import { printFiscalReceipt } from "@/lib/fiscal-pdf";
