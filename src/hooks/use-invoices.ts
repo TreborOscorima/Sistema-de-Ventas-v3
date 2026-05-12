@@ -7,6 +7,7 @@ import {
   EmitInvoiceInput,
   InvoiceListFilters,
   listInvoices,
+  retryInvoices,
   seedDefaultSeries,
 } from "@/lib/invoices";
 
@@ -89,6 +90,40 @@ export function useCancelInvoice() {
     onError: (err) =>
       toast({
         title: "Error al anular",
+        description: err instanceof Error ? err.message : "Error desconocido",
+        variant: "destructive",
+      }),
+  });
+}
+
+export function useRetryInvoices() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: (invoiceIds: string[]) => retryInvoices(invoiceIds),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["electronic-invoices"] });
+      const results = res.results || [];
+      const accepted = results.filter((r) => r.status === "accepted").length;
+      const cancelled = results.filter((r) => r.status === "cancelled").length;
+      const pending = results.filter((r) => r.pending).length;
+      const failed = results.filter(
+        (r) => r.ok === false && !r.pending && !r.skipped,
+      ).length;
+      const parts: string[] = [];
+      if (accepted) parts.push(`${accepted} aceptado(s)`);
+      if (cancelled) parts.push(`${cancelled} anulado(s)`);
+      if (pending) parts.push(`${pending} sigue(n) pendiente(s)`);
+      if (failed) parts.push(`${failed} con error`);
+      toast({
+        title: `Reintento procesado (${results.length})`,
+        description: parts.join(" · ") || "Sin cambios",
+        variant: failed > 0 ? "destructive" : "default",
+      });
+    },
+    onError: (err) =>
+      toast({
+        title: "Error al reintentar",
         description: err instanceof Error ? err.message : "Error desconocido",
         variant: "destructive",
       }),
