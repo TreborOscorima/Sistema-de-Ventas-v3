@@ -282,6 +282,18 @@ export default function ComprobantesPage() {
                             >
                               <Printer className="h-4 w-4" />
                             </Button>
+                            {(["pending", "rejected", "error"].includes(inv.status) ||
+                              (inv.metadata as any)?.cancellation_pending === true) && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                title="Reintentar envío"
+                                disabled={retryMut.isPending}
+                                onClick={() => retryMut.mutate([inv.id])}
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </Button>
+                            )}
                             {inv.pdf_url && (
                               <Button
                                 size="icon"
