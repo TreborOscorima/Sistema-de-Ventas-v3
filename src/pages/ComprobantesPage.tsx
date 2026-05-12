@@ -74,6 +74,7 @@ export default function ComprobantesPage() {
 
   const { data: invoices = [], isLoading } = useInvoices(filters);
   const cancelMut = useCancelInvoice();
+  const retryMut = useRetryInvoices();
   const { data: fiscal } = useFiscalSettings();
   const { data: business } = useBusinessSettings();
   const { toast } = useToast();
