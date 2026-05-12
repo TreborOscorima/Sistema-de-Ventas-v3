@@ -136,6 +136,31 @@ export async function cancelInvoice(
   return data as CancelInvoiceResult;
 }
 
+export interface RetryInvoiceResult {
+  ok: boolean;
+  processed?: number;
+  results?: Array<{
+    invoice_id: string;
+    ok?: boolean;
+    pending?: boolean;
+    skipped?: boolean;
+    status?: string;
+    message?: string;
+    error?: unknown;
+  }>;
+}
+
+export async function retryInvoices(
+  invoiceIds: string[],
+): Promise<RetryInvoiceResult> {
+  if (!invoiceIds.length) return { ok: true, processed: 0, results: [] };
+  const { data, error } = await supabase.functions.invoke("retry-invoice", {
+    body: { invoice_ids: invoiceIds },
+  });
+  if (error) throw new Error(error.message || "Error al reintentar");
+  return data as RetryInvoiceResult;
+}
+
 export async function seedDefaultSeries(
   companyId: string,
   country: "PE" | "AR",
