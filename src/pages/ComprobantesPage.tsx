@@ -29,8 +29,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, FileText, Download, Ban, Search, FilePlus, FileMinus, Printer } from "lucide-react";
-import { useInvoices, useCancelInvoice } from "@/hooks/use-invoices";
+import { Loader2, FileText, Download, Ban, Search, FilePlus, FileMinus, Printer, RefreshCw } from "lucide-react";
+import { useInvoices, useCancelInvoice, useRetryInvoices } from "@/hooks/use-invoices";
 import { useFiscalSettings } from "@/hooks/use-fiscal-settings";
 import { useBusinessSettings } from "@/hooks/use-settings";
 import { printFiscalReceipt } from "@/lib/fiscal-pdf";
@@ -74,6 +74,7 @@ export default function ComprobantesPage() {
 
   const { data: invoices = [], isLoading } = useInvoices(filters);
   const cancelMut = useCancelInvoice();
+  const retryMut = useRetryInvoices();
   const { data: fiscal } = useFiscalSettings();
   const { data: business } = useBusinessSettings();
   const { toast } = useToast();
@@ -182,11 +183,36 @@ export default function ComprobantesPage() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Comprobantes ({invoices.length})
           </CardTitle>
+          {(() => {
+            const retryable = invoices.filter(
+              (i) =>
+                ["pending", "rejected", "error"].includes(i.status) ||
+                (i.metadata as any)?.cancellation_pending === true,
+            );
+            if (!retryable.length) return null;
+            return (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={retryMut.isPending}
+                onClick={() =>
+                  retryMut.mutate(retryable.map((i) => i.id))
+                }
+              >
+                {retryMut.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Reintentar pendientes ({retryable.length})
+              </Button>
+            );
+          })()}
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -256,6 +282,18 @@ export default function ComprobantesPage() {
                             >
                               <Printer className="h-4 w-4" />
                             </Button>
+                            {(["pending", "rejected", "error"].includes(inv.status) ||
+                              (inv.metadata as any)?.cancellation_pending === true) && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                title="Reintentar envío"
+                                disabled={retryMut.isPending}
+                                onClick={() => retryMut.mutate([inv.id])}
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </Button>
+                            )}
                             {inv.pdf_url && (
                               <Button
                                 size="icon"
