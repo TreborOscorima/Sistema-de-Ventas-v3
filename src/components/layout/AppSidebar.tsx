@@ -52,6 +52,7 @@ const navigation: NavItem[] = [
   { name: "Reservas", href: "/reservas", icon: Calendar, module: "reservas" },
   { name: "Reportes", href: "/reportes", icon: BarChart3, module: "reportes" },
   { name: "Comprobantes", href: "/comprobantes", icon: FileText, module: "comprobantes" },
+  { name: "Reportes Fiscales", href: "/reportes-fiscales", icon: FileText, module: "comprobantes" },
   { name: "Configuración", href: "/configuracion", icon: Settings, module: "configuracion" },
 ];
 
