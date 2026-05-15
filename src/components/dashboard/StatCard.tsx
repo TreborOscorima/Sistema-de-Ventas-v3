@@ -46,8 +46,8 @@ export function StatCard({
             </div>
           )}
         </div>
-        <div className={cn("rounded-xl p-3", iconColor)}>
-          <Icon className="h-6 w-6" />
+        <div className={cn("rounded-xl p-3 ring-1 ring-inset ring-border/40", iconColor)}>
+          <Icon className="h-5 w-5" />
         </div>
       </div>
     </div>
