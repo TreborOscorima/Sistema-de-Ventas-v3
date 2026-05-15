@@ -22,10 +22,10 @@ export function StatCard({
 }: StatCardProps) {
   return (
     <div className="stat-card animate-slide-up">
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-3xl font-bold tracking-tight">{value}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 space-y-1.5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</p>
+          <p className="text-3xl font-bold tracking-tight num-tabular">{value}</p>
           {change && (
             <div className="flex items-center gap-1">
               <span
