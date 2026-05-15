@@ -3,6 +3,7 @@ import {
   ShoppingCart,
   Package,
   Users,
+  LayoutDashboard,
 } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { QuickActions } from "@/components/dashboard/QuickActions";
@@ -11,9 +12,12 @@ import { SalesChart } from "@/components/dashboard/SalesChart";
 import { TopProducts } from "@/components/dashboard/TopProducts";
 import { CashboxStatus } from "@/components/dashboard/CashboxStatus";
 import { LowStockAlerts } from "@/components/dashboard/LowStockAlerts";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useLowStockAlerts } from "@/hooks/use-low-stock-alerts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 const Dashboard = () => {
   const { stats, recentSales, cashboxInfo, weeklySales, topProducts, loading } = useDashboard();
