@@ -3,6 +3,7 @@ import {
   ShoppingCart,
   Package,
   Users,
+  LayoutDashboard,
 } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { QuickActions } from "@/components/dashboard/QuickActions";
@@ -11,9 +12,12 @@ import { SalesChart } from "@/components/dashboard/SalesChart";
 import { TopProducts } from "@/components/dashboard/TopProducts";
 import { CashboxStatus } from "@/components/dashboard/CashboxStatus";
 import { LowStockAlerts } from "@/components/dashboard/LowStockAlerts";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useLowStockAlerts } from "@/hooks/use-low-stock-alerts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 const Dashboard = () => {
   const { stats, recentSales, cashboxInfo, weeklySales, topProducts, loading } = useDashboard();
@@ -34,10 +38,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="page-header animate-fade-in">
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Cargando datos...</p>
-        </div>
+        <PageHeader title="Dashboard" subtitle="Cargando datos..." icon={LayoutDashboard} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-32 rounded-xl" />
@@ -47,15 +48,20 @@ const Dashboard = () => {
     );
   }
 
+  const today = format(new Date(), "EEEE, d 'de' MMMM", { locale: es });
+
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="page-header animate-fade-in">
-        <h1 className="page-title">Dashboard</h1>
-        <p className="page-subtitle">
-          Bienvenido de vuelta. Aquí tienes un resumen de tu negocio.
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Bienvenido de vuelta. Aquí tienes un resumen de tu negocio."
+        icon={LayoutDashboard}
+        actions={
+          <span className="rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-medium capitalize text-muted-foreground">
+            {today}
+          </span>
+        }
+      />
 
       {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
